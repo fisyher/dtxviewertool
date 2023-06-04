@@ -14,7 +14,7 @@ function Copyright() {
     <Typography variant="body2" color="text.secondary" align="center">
       {"Copyright © "}
       <Link color="inherit" href="https://mui.com/">
-        DTX Viewer 2
+        DTX Viewer Tool
       </Link>{" "}
       {new Date().getFullYear()}
       {"."}
