@@ -1,6 +1,10 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {RootState} from '../../app/store';
 
+import { DtxFileParser, DTXJson } from '../../external/DTX';
+
+const DEFAULT_ENCODING = 'shift-jis';
+
 interface ChartMetadata {
     source: String,
     size: Number,
@@ -13,8 +17,7 @@ interface ChartNoteData {
 };
 
 interface ChartState {
-    metadata: ChartMetadata,
-    notes: Array<ChartNoteData>,
+    chart: DTXJson,
     raw: String,
     status: 'empty' | 'loading' | 'rawLoaded' | 'error' | 'invalid' | 'valid',
     error: String
@@ -22,12 +25,20 @@ interface ChartState {
 
 //Initial state
 const initialState = {
-  metadata: {
-    source: '',
-    size: 0, 
-    version: ''
+  chart: {
+    songInfo: {
+        title: "",
+        artist: "",
+        comment: "",
+        difficultyLevelDrum: 0,
+        difficultyLevelGuitar: 0,
+        difficultyLevelBass: 0,
+        songDuration: 0,
+      },
+      bars: [],
+      bpmSegments: [],
+      chips: [],
   },
-  notes: [],
   raw: '',
   status: 'empty',
   error: ''
@@ -38,17 +49,26 @@ export const readFile = createAsyncThunk(
     async (file: File) => {
       const reader = new FileReader();
   
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<ChartState>((resolve, reject) => {
         reader.onload = () => {
           const content = reader.result as string;
-          resolve(content);
+
+          //
+          const parser: DtxFileParser = new DtxFileParser(content);
+          if(parser.getErrorMessage() !== ''){
+            reject(parser.getErrorMessage());
+          }
+          else{
+            const dtxJson: DTXJson = parser.getDtxJson();
+            resolve({chart: dtxJson, raw: content, status: 'valid', error: ''});
+          }
         };
   
         reader.onerror = () => {
           reject(reader.error?.message || 'Failed to read file');
         };
-  
-        reader.readAsText(file);
+
+        reader.readAsText(file, DEFAULT_ENCODING);
       });
     }
   );
@@ -76,7 +96,11 @@ export const chartSlice = createSlice({
           })
           .addCase(readFile.fulfilled, (state, action) => {
             state.status = 'rawLoaded';
-            state.raw = action.payload;
+            //state = {...action.payload};
+            state.error = action.payload.error;
+            state.chart = action.payload.chart;
+            state.raw = action.payload.raw;
+            
           })
           .addCase(readFile.rejected, (state, action) => {
             state.status = 'error';
