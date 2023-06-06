@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, Card, CardContent, Typography } from '@mui/material'
 
 function Viewer() {
   return (
@@ -8,6 +8,16 @@ function Viewer() {
       </Typography>
       This is the main viewer
       {/* <ProTip />*/}
+      <Card variant='outlined'>
+        <CardContent>
+          <Typography variant="h5">
+            Card Top
+          </Typography>
+          <Typography>
+            Card Middle
+          </Typography>
+        </CardContent>
+      </Card>
     </Box>
   )
 }

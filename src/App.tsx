@@ -25,8 +25,9 @@ function Copyright() {
 function App() {
   return (
     <BrowserRouter>
-      <Container fixed>
-        <CustomNavBar></CustomNavBar>
+    <CustomNavBar></CustomNavBar>
+      <Container maxWidth={false}>
+        
         {/*Start of Content body*/}
 
         <Routes>
