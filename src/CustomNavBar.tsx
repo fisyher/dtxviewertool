@@ -8,9 +8,8 @@ import { useNavigate } from "react-router-dom";
 
 function CustomNavBar() {
   const navigate = useNavigate();
-
   return (
-    <AppBar position="static">
+    <AppBar position="sticky" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar color="primary">
         <Typography
           component="h1"
