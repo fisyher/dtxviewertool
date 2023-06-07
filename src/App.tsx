@@ -9,20 +9,12 @@ import Debug from "./pages/Debug";
 import Help from "./pages/Help";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-function Copyright() {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center">
-      {"Copyright © "}
-      <Link color="inherit" href="https://mui.com/">
-        DTX Viewer Tool
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
+
+
 
 function App() {
+  
+
   return (
     <BrowserRouter>
     <CustomNavBar></CustomNavBar>
@@ -36,7 +28,7 @@ function App() {
           <Route path="/debug" element={<Debug></Debug>}></Route>
           <Route path="/help" element={<Help></Help>}></Route>
         </Routes>
-        <Copyright />
+        {/* <Copyright /> */}
       </Container>
     </BrowserRouter>
   );
