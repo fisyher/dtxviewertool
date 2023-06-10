@@ -1,11 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import chartReducer from '../reducers/chartReducer';
+import optionsReducer from '../reducers/optionsReducer';
 
 const store = configureStore({
   reducer: {
-    chart: chartReducer
+    chart: chartReducer,
     // debugData: debugDataReducer,
-    // UIOptions: optionsReducer,
+    UIOptions: optionsReducer
     
   },
 })

@@ -463,7 +463,7 @@ export class DtxFileParser {
     let barCount: number = highestBarNumber + 1;
     for (let i = 0; i < barCount; i++) {
       //Check if current bar length has a bar length marker
-      if (currMarkerIndex < barLengthMarkerArray.length && i == barLengthMarkerArray[currMarkerIndex].barNum) {
+      if (currMarkerIndex < barLengthMarkerArray.length && i === barLengthMarkerArray[currMarkerIndex].barNum) {
         currBarLength = barLengthMarkerArray[currMarkerIndex].barLength;
         currMarkerIndex++;
       }

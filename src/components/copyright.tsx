@@ -1,8 +1,9 @@
-import { Link, Typography } from "@mui/material";
+import { Box, Link, Typography } from "@mui/material";
 
 
 function Copyright() {
     return (
+        <Box component="footer">
       <Typography variant="body2" color="text.secondary" align="center">
         {"Copyright © "}
         <Link color="inherit" href="/">
@@ -11,6 +12,7 @@ function Copyright() {
         {new Date().getFullYear()}
         {"."}
       </Typography>
+      </Box>
     );
   }
 
