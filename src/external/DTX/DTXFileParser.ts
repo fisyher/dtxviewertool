@@ -1,8 +1,5 @@
-import type { DTXChip, DTXBar, DTXBpmSegment } from "./DTXJsonTypes";
+import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson } from "./DTXJsonTypes";
 import DTXJson from "./DTXJsonTypes";
-
-const TITLE_TAG: string = "#TITLE";
-const LINES_IN_1_BAR: number = 192;
 
 //Intermediate interfaces
 interface BarLength {
@@ -32,24 +29,51 @@ interface LaneBarChipsData {
   [type: string]: DTXChip[];
 }
 
+interface LaneCodeRemap {
+  code: string[];
+  name: string;
+}
+
+const TITLE_TAG: string = "#TITLE";
+const LINES_IN_1_BAR: number = 192;
+
+// Lane Codes to extract
+/**
+ * BGM
+ * LeftCrashCymbal
+ * Hi-Hat
+ * Snare
+ * LeftBassPedal
+ * Hi-Tom
+ * RightBassPedal
+ * Low-Tom
+ * Floor-Tom
+ * RightCrashCymbal
+ * RideCymbal
+ */
+const LANE_CODES_ARRAY: LaneCodeRemap[] = [
+  { code: ["01"], name: "BGM" },
+  { code: ["1A"], name: "LeftCrashCymbal" },
+  { code: ["11", "18"], name: "Hi-Hat" },
+  { code: ["12"], name: "Snare" },
+  { code: ["1B", "1C"], name: "LeftBassPedal" },
+  { code: ["14"], name: "Hi-Tom" },
+  { code: ["13"], name: "RightBassPedal" },
+  { code: ["15"], name: "Low-Tom" },
+  { code: ["17"], name: "Floor-Tom" },
+  { code: ["16"], name: "RightCrashCymbal" },
+  { code: ["19"], name: "RideCymbal" },
+];
+
 export class DtxFileParser {
   private path: string = "";
   private barLengths: number[] = [];
   private bpmMarkers: BpmMarker[] = [];
   private laneBarChipsArray: LaneBarChipsData[] = [];
   private finalJson: DTXJson = {
-    songInfo: {
-      title: "",
-      artist: "",
-      comment: "",
-      difficultyLevelDrum: 0,
-      difficultyLevelGuitar: 0,
-      difficultyLevelBass: 0,
-      songDuration: 0,
-    },
-    bars: [],
-    bpmSegments: [],
-    chips: [],
+    ...EmptyDTXJson,
+    songInfo: { ...EmptyDTXJson.songInfo },
+    laneChipCounter: { ...EmptyDTXJson.laneChipCounter },
   };
   private errorMessage: string = "";
   //private dtxcontent: string = "";
@@ -62,7 +86,6 @@ export class DtxFileParser {
    */
 
   constructor(inputContent: string) {
-    
     //All dtx files has #TITLE tag
     //let content = iconv.decode(dataBuffer, "Shift-JIS");
     const content = inputContent;
@@ -116,8 +139,10 @@ export class DtxFileParser {
 
       this.laneBarChipsArray = this.extractAndCreateLaneChipsArray(content);
 
+      //Note Count
+      this.finalJson.songInfo.noteCountDrum = this.computeNoteCountDrum();
+
       this.finalJson.chips = this.flattenAllChipsIntoASingleArray(this.laneBarChipsArray);
-      
     } catch (error) {
       this.errorMessage = "Exception occurred: " + error;
       console.error(this.errorMessage);
@@ -144,6 +169,43 @@ export class DtxFileParser {
   //     }
   // }
 
+  private computeNoteCountDrum(): number {
+    /**
+     * LeftCrashCymbal
+     * Hi-Hat
+     * Snare
+     * LeftBassPedal
+     * Hi-Tom
+     * RightBassPedal
+     * Low-Tom
+     * Floor-Tom
+     * RightCrashCymbal
+     * RideCymbal
+     */
+    const countArray: number[] = [
+      this.finalJson.laneChipCounter["LeftCrashCymbal"],
+      this.finalJson.laneChipCounter["Hi-Hat"],
+      this.finalJson.laneChipCounter["Snare"],
+      this.finalJson.laneChipCounter["LeftBassPedal"],
+      this.finalJson.laneChipCounter["Hi-Tom"],
+      this.finalJson.laneChipCounter["RightBassPedal"],
+      this.finalJson.laneChipCounter["Low-Tom"],
+      this.finalJson.laneChipCounter["Floor-Tom"],
+      this.finalJson.laneChipCounter["RightCrashCymbal"],
+      this.finalJson.laneChipCounter["RideCymbal"],
+    ];
+
+    return countArray.reduce((partialSum, current) => partialSum + current, 0);
+  }
+
+  private accumulateCountForLaneChips(laneName: string, count: number) {
+    if (this.finalJson.laneChipCounter[laneName]) {
+      this.finalJson.laneChipCounter[laneName] += count;
+    } else {
+      this.finalJson.laneChipCounter[laneName] = count;
+    }
+  }
+
   private extractAndCreateLaneChipsArray(dtxContent: string): LaneBarChipsData[] {
     let barChipsArray: LaneBarChipsData[] = [];
 
@@ -163,17 +225,15 @@ export class DtxFileParser {
        * RightCrashCymbal
        * RideCymbal
        */
-      currBarChips["BGM"] = this.extractChipsFromLanesInBar(dtxContent, index, ["01"], "BGM");
-      currBarChips["LeftCrashCymbal"] = this.extractChipsFromLanesInBar(dtxContent, index, ["1A"], "LeftCrashCymbal");
-      currBarChips["Hi-Hat"] = this.extractChipsFromLanesInBar(dtxContent, index, ["11", "18"], "Hi-Hat");
-      currBarChips["Snare"] = this.extractChipsFromLanesInBar(dtxContent, index, ["12"], "Snare");
-      currBarChips["LeftBassPedal"] = this.extractChipsFromLanesInBar(dtxContent, index, ["1B", "1C"], "LeftBassPedal");
-      currBarChips["Hi-Tom"] = this.extractChipsFromLanesInBar(dtxContent, index, ["14"], "Hi-Tom");
-      currBarChips["RightBassPedal"] = this.extractChipsFromLanesInBar(dtxContent, index, ["13"], "RightBassPedal");
-      currBarChips["Low-Tom"] = this.extractChipsFromLanesInBar(dtxContent, index, ["15"], "Low-Tom");
-      currBarChips["Floor-Tom"] = this.extractChipsFromLanesInBar(dtxContent, index, ["17"], "Floor-Tom");
-      currBarChips["RightCrashCymbal"] = this.extractChipsFromLanesInBar(dtxContent, index, ["16"], "RightCrashCymbal");
-      currBarChips["RideCymbal"] = this.extractChipsFromLanesInBar(dtxContent, index, ["19"], "RideCymbal");
+      for (let j = 0; j < LANE_CODES_ARRAY.length; j++) {
+        currBarChips[LANE_CODES_ARRAY[j].name] = this.extractChipsFromLanesInBar(
+          dtxContent,
+          index,
+          LANE_CODES_ARRAY[j].code,
+          LANE_CODES_ARRAY[j].name
+        );
+        this.accumulateCountForLaneChips(LANE_CODES_ARRAY[j].name, currBarChips[LANE_CODES_ARRAY[j].name].length);
+      }
 
       barChipsArray.push(currBarChips);
     }
@@ -182,21 +242,20 @@ export class DtxFileParser {
   }
 
   /**
-   *  
-  */
+   *
+   */
   private flattenAllChipsIntoASingleArray(laneBarChipsDataArray: LaneBarChipsData[]): Array<DTXChip> {
     let retChipArray: Array<DTXChip> = [];
 
     for (let index = 0; index < laneBarChipsDataArray.length; index++) {
-        const laneBarChips: LaneBarChipsData = laneBarChipsDataArray[index];
+      const laneBarChips: LaneBarChipsData = laneBarChipsDataArray[index];
 
-        for(const k in laneBarChips){
-            const laneChipArray: Array<DTXChip> = laneBarChips[k];
-            retChipArray.push(...laneChipArray);
-        }
-        
+      for (const k in laneBarChips) {
+        const laneChipArray: Array<DTXChip> = laneBarChips[k];
+        retChipArray.push(...laneChipArray);
+      }
     }
-    
+
     return retChipArray;
   }
 
@@ -357,7 +416,12 @@ export class DtxFileParser {
    * @param barNum
    * @param laneCodes
    */
-  private extractChipsFromLanesInBar(dtxContent: string, barNum: number, laneCodes: string[], inputLaneType: string): Array<DTXChip> {
+  private extractChipsFromLanesInBar(
+    dtxContent: string,
+    barNum: number,
+    laneCodes: string[],
+    inputLaneType: string
+  ): Array<DTXChip> {
     let retArray: Array<DTXChip> = [];
     const currBarLength: number = this.barLengths[barNum];
 
@@ -392,7 +456,7 @@ export class DtxFileParser {
               lineNumberInBar: element.lineNum,
               timePosition: this.calculateAbsoluteTime(element.barNum, element.lineNum),
               chipCode: element.chipCode,
-              laneType: inputLaneType
+              laneType: inputLaneType,
             });
           }
         }

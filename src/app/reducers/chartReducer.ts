@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DtxFileParser, DTXJson } from "../../external/DTX";
+import { EmptyDTXJson } from "../../external/DTX/DTXJsonTypes";
 
 const DEFAULT_ENCODING = "shift-jis";
 
@@ -24,20 +25,12 @@ interface ChartState {
 }
 
 //Initial state
+//Deep copy of EmptyDTXJson is necessary to avoid TypeError cause by constness of Object
 const initialState = {
   dtxJsonObject: {
-    songInfo: {
-      title: "",
-      artist: "",
-      comment: "",
-      difficultyLevelDrum: 0,
-      difficultyLevelGuitar: 0,
-      difficultyLevelBass: 0,
-      songDuration: 0,
-    },
-    bars: [],
-    bpmSegments: [],
-    chips: [],
+    ...EmptyDTXJson,
+    songInfo: { ...EmptyDTXJson.songInfo },
+    laneChipCounter: { ...EmptyDTXJson.laneChipCounter },
   },
   raw: "",
   status: "empty",

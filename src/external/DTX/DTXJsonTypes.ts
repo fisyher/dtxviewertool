@@ -47,6 +47,9 @@ interface DTXSongInfoType {
   difficultyLevelGuitar: number;
   difficultyLevelBass: number;
   songDuration: number;
+  noteCountDrum: number;
+  noteCountGuitar: number;
+  noteCountBass: number;
 }
 
 interface DTXMetaDataType {
@@ -77,14 +80,38 @@ interface DTXChip {
   laneType: String;
 }
 
+interface DTXLaneChipCounter {
+  [type: string]: number;
+}
+
 interface DTXJson {
   songInfo: DTXSongInfoType;
   metadata?: DTXMetaDataType;
   chips: Array<DTXChip>;
   bars: Array<DTXBar>;
   bpmSegments: Array<DTXBpmSegment>;
+  laneChipCounter: DTXLaneChipCounter;
 }
 
-export type { DTXBar, DTXBpmSegment, DTXChip, DTXSongInfoType, DTXMetaDataType };
+const EmptyDTXJson: DTXJson = {
+  songInfo: {
+    title: "",
+    artist: "",
+    comment: "",
+    difficultyLevelDrum: 0,
+    difficultyLevelGuitar: 0,
+    difficultyLevelBass: 0,
+    songDuration: 0,
+    noteCountDrum: 0,
+    noteCountGuitar: 0,
+    noteCountBass: 0,
+  },
+  bars: [],
+  bpmSegments: [],
+  chips: [],
+  laneChipCounter: {},
+};
 
+export type { DTXBar, DTXBpmSegment, DTXChip, DTXSongInfoType, DTXMetaDataType };
+export { EmptyDTXJson };
 export default DTXJson;
