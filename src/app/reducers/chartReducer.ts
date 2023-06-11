@@ -92,6 +92,7 @@ export const chartSlice = createSlice({
         state.status = "loading";
         state.error = "";
         state.raw = "";
+        state.dtxJsonObject = initialState.dtxJsonObject;
       })
       .addCase(readFile.fulfilled, (state, action) => {
         state.status = "rawLoaded";
@@ -105,7 +106,7 @@ export const chartSlice = createSlice({
       .addCase(parseFile.pending, (state) => {
         state.status = "parsing";
         state.error = "";
-        state.raw = "";
+        //state.raw = "";
       })
       .addCase(parseFile.fulfilled, (state, action) => {
         state.status = action.payload.status;
