@@ -1,5 +1,5 @@
 import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { DTXChipPositionInCanvas, DTXDrawingConfig } from "../../external/DTX/DTXCanvasTypes";
+import { DTXCanvasDataType, DTXDrawingConfig } from "../../external/DTX/DTXCanvasTypes";
 import { DtxCanvasPositioner } from "../../external/DTX/DTXCanvasPositioner";
 import { DTXJson } from "../../external/DTX";
 import type { GameModeType } from "../../external/DTX/DTXCanvasTypes";
@@ -7,7 +7,7 @@ import type { GameModeType } from "../../external/DTX/DTXCanvasTypes";
 type CanvasEngineStatusType = "empty" | "loading" | "loaded" | "rendering" | "done" | "error";
 
 interface CanvasChartState {
-  canvasChipPositions: DTXChipPositionInCanvas[];
+  canvasChipPositions: DTXCanvasDataType[];
   gameMode: GameModeType;
   status: CanvasEngineStatusType;
   error: string;

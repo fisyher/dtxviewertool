@@ -1,10 +1,11 @@
 import DTXJson, { DTXBar, DTXBpmSegment, DTXChip } from "./DTXJsonTypes";
-import { DTXRect, DTXChipPixelRectPos, DTXDrawingConfig, DTXChipPositionInCanvas } from "./DTXCanvasTypes";
+import { DTXRect, DTXChipPixelRectPos, DTXDrawingConfig, DTXCanvasDataType, DTXTextRectPos } from "./DTXCanvasTypes";
+import { convertNumberToFormattedText } from "../utility/basicStringFormatter";
 
 interface DTXInterimBarPosType {
   absoluteTime: number;
   relativePosY: number;
-  posY: number;
+  //posY: number;
   frameIndex: number;
   canvasSheetIndex: number;
 }
@@ -63,56 +64,58 @@ export class DtxCanvasPositioner {
 
   //Put in a map and reference this map instead in case need to change
   readonly DM_CHIP_POS_SIZE_INFO: { [key: string]: { posX: number; width: number; height: number } } = {
-    Bar: { posX: 15, width: 300, height: 2 },
-    BGM: { posX: 26, width: 289, height: 2 },
-    LeftCrashCymbal: { posX: 26, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
-    "Hi-Hat": { posX: 50, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    LeftBassPedal: { posX: 68, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    Snare: { posX: 86, width: this.DEFAULT_CHIP_WIDTH + 3, height: this.DEFAULT_CHIP_HEIGHT },
-    "Hi-Tom": { posX: 107, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    RightBassPedal: { posX: 125, width: this.DEFAULT_CHIP_WIDTH + 5, height: this.DEFAULT_CHIP_HEIGHT },
-    "Low-Tom": { posX: 148, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    "Floor-Tom": { posX: 166, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    RightCrashCymbal: { posX: 184, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
-    RideCymbal: { posX: 208, width: this.DEFAULT_CHIP_WIDTH + 1, height: this.DEFAULT_CHIP_HEIGHT },
-    BPMMarker: { posX: 217, width: this.DEFAULT_CHIP_WIDTH + 1, height: 7 },
+    Bar: { posX: 70, width: 220, height: 2 },
+    BGM: { posX: 70, width: 220, height: 2 },
+    LeftCrashCymbal: { posX: 70, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
+    "Hi-Hat": { posX: 94, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    LeftBassPedal: { posX: 112, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    Snare: { posX: 130, width: this.DEFAULT_CHIP_WIDTH + 3, height: this.DEFAULT_CHIP_HEIGHT },
+    "Hi-Tom": { posX: 151, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    RightBassPedal: { posX: 169, width: this.DEFAULT_CHIP_WIDTH + 5, height: this.DEFAULT_CHIP_HEIGHT },
+    "Low-Tom": { posX: 192, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    "Floor-Tom": { posX: 210, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    RightCrashCymbal: { posX: 228, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
+    RideCymbal: { posX: 252, width: this.DEFAULT_CHIP_WIDTH + 1, height: this.DEFAULT_CHIP_HEIGHT },
+    BPMMarker: { posX: 52, width: this.DEFAULT_CHIP_WIDTH, height: 2 },
   };
 
   private barIndexToFrameSheetMapping: DTXInterimBarPosType[];
   private actualPixelsPerSecond: number;
   private isDrawFromDownToUp: boolean;
-  private bodySectionRect: DTXRect;
+  private bodySectionHeightPerCanvas: number[] = [];
 
-  private canvasChipPositions: DTXChipPositionInCanvas[] = [];
+  private canvasChipPositions: DTXCanvasDataType[] = [];
 
   /**
    * Constructor takes in DTXJson object and a Drawing configuration selected by UI
    */
   constructor(dtxJson: DTXJson, drawingOptions: DTXDrawingConfig) {
-    this.bodySectionRect = this.availableBodySectionRect(drawingOptions.maxHeight);
+    const maxBodySectionRect = this.availableBodySectionRect(drawingOptions.maxHeight);
 
     this.actualPixelsPerSecond = drawingOptions.scale * this.BASE_PIXELS_PER_SECOND;
     this.isDrawFromDownToUp = this.DEFAULT_DRAW_DIRECTION_DOWN_TO_UP;
 
-    //Compute the interim mapping of Bar to Frame/Sheet index
+    //Compute the interim mapping of Bar to Frame/Sheet index, number of canvas, body section height and canvas-width
     //Ensure entire bars would be drawn within the same frame
-    const { barFrameSheetMapping, numOfCanvas } = this.computeBarIndexToFrameSheetMapping(
-      dtxJson,
-      this.bodySectionRect.height
-    );
+    const { barFrameSheetMapping, numOfCanvas, bodySectionHeightPerCanvas, widthPerCanvas } =
+      this.computeBarIndexToFrameSheetMapping(dtxJson, maxBodySectionRect.height);
     this.barIndexToFrameSheetMapping = barFrameSheetMapping;
+    this.bodySectionHeightPerCanvas = bodySectionHeightPerCanvas;
 
     //Initialize the canvasChipPositions given the number of canvas computed. This should be 1 for most charts
     for (let index = 0; index < numOfCanvas; index++) {
-      this.canvasChipPositions.push({ chipPositions: [] });
+      this.canvasChipPositions.push({
+        chipPositions: [],
+        textPositions: [],
+        canvasSize: { width: widthPerCanvas[index], height: this.canvasHeightGivenBodySectionHeight(bodySectionHeightPerCanvas[index]) },
+      });
     }
 
-
-
+    //Compute pixel positions for chips to be drawn
     this.computeChipPositionInCanvas(dtxJson);
   }
 
-  public getCanvasChipPositionsForDrawing(): DTXChipPositionInCanvas[] {
+  public getCanvasChipPositionsForDrawing(): DTXCanvasDataType[] {
     return this.canvasChipPositions;
   }
 
@@ -124,15 +127,34 @@ export class DtxCanvasPositioner {
       const barInfo: DTXBar = dtxJson.bars[index];
       const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(index, barInfo.startTimePos);
 
+      //Bar Line
       const chipPixelPos: DTXChipPixelRectPos = {
         laneType: "Bar",
-        posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
-        posY: chipLinePosInCanvas.posY,
-        width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
-        height: this.DM_CHIP_POS_SIZE_INFO["Bar"].height,
+        rectPos: {
+          posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+          posY: chipLinePosInCanvas.posY,
+          width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
+          height: this.DM_CHIP_POS_SIZE_INFO["Bar"].height,
+        },
+      };
+
+      //Bar Number
+      const textPos: DTXTextRectPos = {
+        rectPos:{
+          posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].width + 2,
+          posY: chipLinePosInCanvas.posY,
+          width: 50,
+          height: 21
+        },
+        fontFamily: "Arial",
+        fontWeight: 200,
+        fontSize: 18,
+        color: "#ffffff",
+        text: convertNumberToFormattedText(index, 3)        
       };
 
       this.canvasChipPositions[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+      this.canvasChipPositions[chipLinePosInCanvas.canvasSheetIndex].textPositions.push(textPos);
     }
 
     //Compute for BPM change marker
@@ -141,15 +163,34 @@ export class DtxCanvasPositioner {
 
       const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(index, bpmSegment.startTimePos);
 
+      //BPM Line
       const chipPixelPos: DTXChipPixelRectPos = {
         laneType: "BPMMarker",
-        posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].posX,
-        posY: chipLinePosInCanvas.posY,
-        width: this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].width,
-        height: this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].height,
+        rectPos: {
+          posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].posX,
+          posY: chipLinePosInCanvas.posY,
+          width: this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].width,
+          height: this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].height,
+        },
+      };
+
+      //BPM Value as text
+      const textPos: DTXTextRectPos = {
+        rectPos:{
+          posX: chipLinePosInCanvas.posX + 15,
+          posY: chipLinePosInCanvas.posY,
+          width: 50,
+          height: 15
+        },
+        fontFamily: "Arial",
+        fontWeight: 100,
+        fontSize: 12,
+        color: "#ffffff",
+        text: bpmSegment.bpm.toFixed(2)        
       };
 
       this.canvasChipPositions[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+      this.canvasChipPositions[chipLinePosInCanvas.canvasSheetIndex].textPositions.push(textPos);
     }
 
     //Compute for chips
@@ -160,10 +201,12 @@ export class DtxCanvasPositioner {
       //
       const chipPixelPos: DTXChipPixelRectPos = {
         laneType: chip.laneType,
-        posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO[chip.laneType].posX,
-        posY: chipLinePosInCanvas.posY,
-        width: this.DM_CHIP_POS_SIZE_INFO[chip.laneType].width,
-        height: this.DM_CHIP_POS_SIZE_INFO[chip.laneType].height,
+        rectPos: {
+          posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO[chip.laneType].posX,
+          posY: chipLinePosInCanvas.posY,
+          width: this.DM_CHIP_POS_SIZE_INFO[chip.laneType].width,
+          height: this.DM_CHIP_POS_SIZE_INFO[chip.laneType].height,
+        },
       };
 
       this.canvasChipPositions[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
@@ -183,13 +226,37 @@ export class DtxCanvasPositioner {
     }
   }
 
+  private canvasWidthForFrames(numOfFrames: number): number {
+    return numOfFrames * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right);
+  }
+
+  private canvasHeightGivenBodySectionHeight(bodySectionHeight: number): number {
+    return (
+      bodySectionHeight +
+      (this.HEADER_SECTION_HEIGHT +
+        this.SECTION_SPLIT_MARGIN +
+        this.FOOTER_SECTION_HEIGHT +
+        this.SECTION_SPLIT_MARGIN +
+        this.BODY_FRAME_MARGINS.top +
+        this.BODY_FRAME_MARGINS.bottom)
+    );
+  }
+
   private computeBarIndexToFrameSheetMapping(
     dtxJson: DTXJson,
     bodySectionHeight: number
-  ): { barFrameSheetMapping: DTXInterimBarPosType[]; numOfCanvas: number } {
+  ): {
+    barFrameSheetMapping: DTXInterimBarPosType[];
+    numOfCanvas: number;
+    bodySectionHeightPerCanvas: number[];
+    widthPerCanvas: number[];
+  } {
     let barIndexToFrameSheetMapping: DTXInterimBarPosType[] = [];
+    let greatestFrameHeightPerCanvas: number[] = [];
+    let returnedWidthPerCanvas: number[] = [];
     let currFrameNum: number = 0;
     let currFramePosY: number = 0;
+    let currGreatestFrameHeight: number = 0;
     let currCanvasSheetIndex: number = 0;
     for (let index = 0; index < dtxJson.bars.length; index++) {
       const barInfo: DTXBar = dtxJson.bars[index];
@@ -200,11 +267,18 @@ export class DtxCanvasPositioner {
       if (currFramePosY + currBarHeightInPx > bodySectionHeight) {
         //Check if next frame can fit within current canvas sheet
         if (currFrameNum + 1 > this.MAX_PAGEPERCANVAS) {
+          returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1));
           incrementCanvasIndex = true;
           currFrameNum = 0;
         } else {
           currFrameNum++;
         }
+
+        //Current Frame Pos Y before reset would be the highest Bar for this frame
+        if (currFramePosY > currGreatestFrameHeight) {
+          currGreatestFrameHeight = currFramePosY;
+        }
+
         //Reset Frame Height
         currFramePosY = 0;
       }
@@ -213,7 +287,7 @@ export class DtxCanvasPositioner {
       barIndexToFrameSheetMapping.push({
         absoluteTime: barInfo.startTimePos,
         relativePosY: currFramePosY,
-        posY: this.computeActualPixelPosY(currFramePosY, this.bodySectionRect, this.isDrawFromDownToUp),
+        //posY: this.computeActualPixelPosY(currFramePosY, this.bodySectionRect, this.isDrawFromDownToUp),
         frameIndex: currFrameNum,
         canvasSheetIndex: currCanvasSheetIndex,
       });
@@ -222,13 +296,34 @@ export class DtxCanvasPositioner {
       currFramePosY += currBarHeightInPx;
       //Increment canvas value only when canvas sheet hit size limit
       if (incrementCanvasIndex) {
+        //Store currGreatestFrameHeight into array then reset to 0
+        greatestFrameHeightPerCanvas.push(currGreatestFrameHeight);
+        currGreatestFrameHeight = 0;
         currCanvasSheetIndex++;
       }
     }
 
-    return { barFrameSheetMapping: barIndexToFrameSheetMapping, numOfCanvas: currCanvasSheetIndex + 1 };
+    //Store the greatest frame height one last time if not present
+    if (greatestFrameHeightPerCanvas.length !== currCanvasSheetIndex + 1) {
+      greatestFrameHeightPerCanvas.push(currGreatestFrameHeight);
+    }
+
+    //Store the body section width of all frames one last time if not present
+    if (returnedWidthPerCanvas.length !== currCanvasSheetIndex + 1) {
+      returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1));
+    }
+
+    return {
+      barFrameSheetMapping: barIndexToFrameSheetMapping,
+      numOfCanvas: currCanvasSheetIndex + 1,
+      bodySectionHeightPerCanvas: greatestFrameHeightPerCanvas,
+      widthPerCanvas: returnedWidthPerCanvas,
+    };
   }
 
+  /*
+  Calculate max possible Body Section Rect per Frame
+  */
   private availableBodySectionRect(maxHeight: number): DTXRect {
     return {
       posX: this.BODY_FRAME_MARGINS.left,
@@ -257,6 +352,15 @@ export class DtxCanvasPositioner {
         (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right);
     const canvasSheetIndex = this.barIndexToFrameSheetMapping[barNum].canvasSheetIndex;
 
+    //Retrieve the actual Body Section Height for current canvas
+    const currCanvasBodySectionHeight = this.bodySectionHeightPerCanvas[canvasSheetIndex];
+    const currCanvasBodySectionRect: DTXRect = {
+      posX: this.BODY_FRAME_MARGINS.left,
+      posY: this.HEADER_SECTION_HEIGHT + this.SECTION_SPLIT_MARGIN + this.BODY_FRAME_MARGINS.top,
+      width: this.BODY_FRAME_WIDTH,
+      height: currCanvasBodySectionHeight,
+    };
+
     //Compute the posY in canvas for a given position in time and barIndex
     const timeDiff: number = absTime - this.barIndexToFrameSheetMapping[barNum].absoluteTime;
     const heightDelta: number = timeDiff * this.actualPixelsPerSecond;
@@ -264,7 +368,7 @@ export class DtxCanvasPositioner {
 
     return {
       posX,
-      posY: this.computeActualPixelPosY(relativePosY, this.bodySectionRect, this.isDrawFromDownToUp),
+      posY: this.computeActualPixelPosY(relativePosY, currCanvasBodySectionRect, this.isDrawFromDownToUp),
       canvasSheetIndex,
     };
   }

@@ -44,16 +44,23 @@ interface DTXRect {
 
 interface DTXChipPixelRectPos {
   laneType: string;
-  posX: number;
-  posY: number;
-  width: number;
-  height: number;
-  text? : string;
+  rectPos: DTXRect;
   //canvasSheetIndex: number;
 }
 
-interface DTXChipPositionInCanvas {
-    chipPositions: DTXChipPixelRectPos[]
+interface DTXTextRectPos {
+  color: string;
+  rectPos: DTXRect;
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  fontWeight: number;
+}
+
+interface DTXCanvasDataType {
+    chipPositions: DTXChipPixelRectPos[];
+    textPositions: DTXTextRectPos[];
+    canvasSize: {width: number, height: number};
 }
 
 interface DTXDrawingConfig {
@@ -65,5 +72,5 @@ interface DTXDrawingConfig {
   isLevelShown: boolean;
 }
 
-export type { DTXRect, DTXChipPixelRectPos, ChartModeType, DifficultyLabelType, DTXDrawingConfig, DTXChipPositionInCanvas, GameModeType };
+export type { DTXRect, DTXChipPixelRectPos, ChartModeType, DifficultyLabelType, DTXDrawingConfig, DTXCanvasDataType, DTXTextRectPos, GameModeType };
 export { ChartModes, DifficultyLabels };

@@ -1,10 +1,19 @@
 import { fabric } from "fabric";
-import { DTXChipPixelRectPos, DTXChipPositionInCanvas, DTXRect } from "../DTX/DTXCanvasTypes";
+import { DTXChipPixelRectPos, DTXCanvasDataType, DTXRect, DTXTextRectPos } from "../DTX/DTXCanvasTypes";
 
 type CanvasDrawOptions = {
   fill?: string | fabric.Pattern | fabric.Gradient | undefined;
   stroke?: string | undefined;
   strokeWidth?: number | undefined;
+};
+
+type CanvasTextOptions = {
+  fill?: string | fabric.Pattern | fabric.Gradient | undefined;
+  fontFamily?: string | undefined;
+  fontWeight?: number | undefined;
+  fontSize?: number | undefined;
+  originY?: string | undefined;
+  originX?: string | undefined;
 };
 
 export default class CanvasDrawing {
@@ -23,22 +32,34 @@ export default class CanvasDrawing {
     "Floor-Tom": { color: "#fea101" },
     RightCrashCymbal: { color: "#00ccff" },
     RideCymbal: { color: "#5a9cf9" },
-    BPMMarker: { color: "#b1b1b1" },
+    BPMMarker: { color: "#7f7f7f" },
   };
 
   public static drawAllChipsOntoCanvas(
     canvasObject: fabric.StaticCanvas,
-    chipPositionsForCanvas: DTXChipPositionInCanvas
+    canvasData: DTXCanvasDataType
   ) {
     //
-    for (let index = 0; index < chipPositionsForCanvas.chipPositions.length; index++) {
-      const element: DTXChipPixelRectPos = chipPositionsForCanvas.chipPositions[index];
+    for (let index = 0; index < canvasData.chipPositions.length; index++) {
+      const element: DTXChipPixelRectPos = canvasData.chipPositions[index];
 
       this.addChip(
         canvasObject,
-        { posX: element.posX, posY: element.posY, width: element.width, height: element.height },
+        {  posX: element.rectPos.posX, posY: element.rectPos.posY, width: element.rectPos.width, height: element.rectPos.height },
         { fill: CanvasDrawing.DM_CHIP_COLOR_INFO[element.laneType].color }
       );
+    }
+
+    for (let index = 0; index < canvasData.textPositions.length; index++) {
+      const element: DTXTextRectPos = canvasData.textPositions[index];
+
+      this.addText(
+        canvasObject,
+        {  posX: element.rectPos.posX, posY: element.rectPos.posY, width: element.rectPos.width, height: element.rectPos.height },
+        element.text,
+        { fill: element.color, fontFamily: element.fontFamily, fontSize: element.fontSize, fontWeight: element.fontWeight }
+      );
+      
     }
   }
 
@@ -62,6 +83,34 @@ export default class CanvasDrawing {
     });
     canvasObject.add(rect);
   }
+
+  private static addText(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, text: string, textOptions: CanvasTextOptions){
+    /**
+     * "BARNUM":new fabric.Text('000',{
+    // backgroundColor: 'black',
+    fill: '#ffffff',
+    fontSize: 16,
+    originY: 'center'
+     */
+
+    const textObject = new fabric.Text(text, {
+        left: positionSize.posX,
+        top: positionSize.posY,
+        fill: textOptions.fill ? textOptions.fill : "#ffffff",
+        fontSize: textOptions.fontSize ? textOptions.fontSize : 20,
+        fontWeight: textOptions.fontWeight ? textOptions.fontWeight : "",
+        fontFamily: textOptions.fontFamily ? textOptions.fontFamily : "Times New Roman",
+        originY: textOptions.originY ? textOptions.originY : "center",
+        originX: textOptions.originX ? textOptions.originX : "left"
+    });
+
+    const currTextWidth : number | undefined = textObject.width;
+    if(positionSize.width && currTextWidth && currTextWidth >  positionSize.width){
+        textObject.scaleToWidth(positionSize.width); //positionSize.width/currTextWidth required for laptop browser but why? Scale becomes relative??? Behaviour different from jsfiddle...
+    }
+
+    canvasObject.add(textObject);
+}
 
   // function addLine(positionSize, drawOptions){
 
