@@ -5,10 +5,11 @@ import { Paper } from "@mui/material";
 interface FabricCanvasProps {
   id: string;
   drawFunction: Function;
+  canvasProps: {height: number, width: number, backgroundColor: string};
   triggerDraw: number;
 }
 
-const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, triggerDraw }) => {
+const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasProps, triggerDraw }) => {
   const elementRef = useRef<HTMLCanvasElement>(null);
   const [canvasObject, setCanvasObject] = useState<fabric.StaticCanvas | null>(null);
 
@@ -16,9 +17,9 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, triggerDr
     console.log("create new canvas object");
     setCanvasObject(
       new fabric.StaticCanvas(id, {
-        height: 4000,
-        width: 4000,
-        backgroundColor: "darkgrey",
+        height: canvasProps.height,
+        width: canvasProps.width,
+        backgroundColor: canvasProps.backgroundColor,
       })
     );
 
