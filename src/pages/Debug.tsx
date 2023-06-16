@@ -10,6 +10,7 @@ import Tab from "@mui/material/Tab";
 import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
+import { loadDtxJsonIntoEngine } from "../app/reducers/canvasEngineReducer";
 
 function Debug() {
   //Initialize dispatcher and selector
@@ -27,19 +28,14 @@ function Debug() {
         console.log("Dispatch action to parseFile");
         dispatch(parseFile(raw));
       }
+      
     }
 
     // Update the reference to the current nestedField value
     previousStatusRef.current = status;
   }, [status, raw, dispatch]);
 
-  //Handle file change event
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      dispatch(readFile(file));
-    }
-  };
+  
 
   //
   const [tabValue, setTabValue] = React.useState("1");
@@ -53,10 +49,7 @@ function Debug() {
         <Typography variant="h4" component="h1" gutterBottom>
           Debugger for Viewer
         </Typography>
-        <div>
-          <input type="file" accept=".dtx, .gda" onChange={handleFileChange} />
-          {status === "loading" && <p>Loading file...</p>}
-        </div>
+        
       </Box>
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>

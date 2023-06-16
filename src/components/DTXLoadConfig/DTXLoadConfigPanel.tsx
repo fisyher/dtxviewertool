@@ -5,16 +5,13 @@ import { useAppSelector, useAppDispatch } from "../../app/hooks";
 import { ChartState, ChartStatusType, parseFile, readFile } from "../../app/reducers/chartReducer";
 import { FormControl, FormGroup, Grid, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import {
-  ChartModeType,
-  ChartModes,
-  DifficultyLabelType,
-  DifficultyLabels,
   LoadConfigOptionType,
   setChartMode,
   setDifficultyLabel,
   setMaxHeight,
   setScale,
 } from "../../app/reducers/optionsReducer";
+import { ChartModeType, ChartModes, DifficultyLabelType, DifficultyLabels } from "../../external/DTX/DTXCanvasTypes";
 
 const ScaleOptions: number[] = [0.5, 1.0, 1.5, 2.0];
 const HeightOptions: number[] = [2000, 2500, 3000, 3500, 4000];
@@ -30,20 +27,20 @@ const DTXLoadConfigPanel: React.FC = () => {
   );
 
   //
-  useEffect(() => {
-    if (status !== previousStatusRef.current) {
-      // Dispatch your action here conditionally
-      console.log("Change in status detected");
-      console.log(previousStatusRef.current + " to " + status);
-      if (status === "rawLoaded") {
-        console.log("Dispatch action to parseFile");
-        dispatch(parseFile(raw));
-      }
-    }
+  // useEffect(() => {
+  //   if (status !== previousStatusRef.current) {
+  //     // Dispatch your action here conditionally
+  //     console.log("Change in status detected");
+  //     console.log(previousStatusRef.current + " to " + status);
+  //     if (status === "rawLoaded") {
+  //       console.log("Dispatch action to parseFile");
+  //       dispatch(parseFile(raw));
+  //     }
+  //   }
 
-    // Update the reference to the current nestedField value
-    previousStatusRef.current = status;
-  }, [status, raw, dispatch]);
+  //   // Update the reference to the current nestedField value
+  //   previousStatusRef.current = status;
+  // }, [status, raw, dispatch]);
 
   //Handle file change event
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {

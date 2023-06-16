@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import chartReducer from '../reducers/chartReducer';
 import optionsReducer from '../reducers/optionsReducer';
+import canvasEngineReducer from '../reducers/canvasEngineReducer';
 
 const store = configureStore({
   reducer: {
     chart: chartReducer,
+    canvasDTX: canvasEngineReducer,
     // debugData: debugDataReducer,
     UIOptions: optionsReducer
     

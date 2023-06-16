@@ -1,30 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
-//DifficultyLabel
-enum DifficultyLabelEnum {
-  BASIC = "Basic",
-  ADVANCED = "Advanced",
-  EXTREME = "Extreme",
-  MASTER = "Master",
-  REAL = "Real",
-}
-//Array version computed from Enum
-const DifficultyLabels: string[] = Object.values(DifficultyLabelEnum);
-/**
- * This is equivalent to:
- * type DifficultyLabelType = 'Basic' | 'Advanced' | 'Extreme' | 'Master' | Real;
- */
-type DifficultyLabelType = `${DifficultyLabelEnum}`;
-
-//ChartModeEnum
-enum ChartModeEnum {
-  XG_GITADORA = "XG/Gitadora",
-  CLASSIC = "Classic",
-  FULL = "Full",
-}
-//Array version computed from Enum
-const ChartModes: string[] = Object.values(ChartModeEnum);
-type ChartModeType = `${ChartModeEnum}`;
+import { DifficultyLabelType, ChartModeType } from "../../external/DTX/DTXCanvasTypes";
 
 interface LoadConfigOptionType {
   inputFile: string;
@@ -81,8 +57,8 @@ export const optionsSlice = createSlice({
   },
 });
 
-export type { OptionsStateType, LoadConfigOptionType, DifficultyLabelType, ChartModeType };
-export { DifficultyLabels, ChartModes };
+export type { OptionsStateType, LoadConfigOptionType };
+//export { DifficultyLabels, ChartModes };
 export const { reset, setInputFile, setDifficultyLabel, setScale, setMaxHeight, setChartMode, setIsLevelShown } =
   optionsSlice.actions;
 export default optionsSlice.reducer;

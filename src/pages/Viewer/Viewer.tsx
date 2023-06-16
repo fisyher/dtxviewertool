@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, Paper, Typography } from "@mui/material";
 import Sidebar from "./Sidebar";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import ReactSplit from "@devbookhq/splitter";
 import { useTheme } from "@mui/material";
 import Copyright from "../../components/copyright";
@@ -8,15 +8,52 @@ import Copyright from "../../components/copyright";
 import DTXLoadConfigPanel from "../../components/DTXLoadConfig/DTXLoadConfigPanel";
 import FabricCanvas from "../../components/FabricCanvas/FabricCanvas";
 import { fabric } from "fabric";
-import { useAppSelector } from "../../app/hooks";
-import { ChartState } from "../../app/reducers/chartReducer";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { ChartState, ChartStatusType, parseFile } from "../../app/reducers/chartReducer";
+import { loadDtxJsonIntoEngine } from "../../app/reducers/canvasEngineReducer";
+import { LoadConfigOptionType } from "../../app/reducers/optionsReducer";
+import { DTXDrawingConfig } from "../../external/DTX/DTXCanvasTypes";
 
 const Viewer: React.FC = () => {
   const {
     mixins: { toolbar },
   } = useTheme();
 
+  const dispatch = useAppDispatch();
+  const previousStatusRef = useRef<ChartStatusType>();
   const { status, error, raw, dtxJsonObject } : ChartState = useAppSelector((state) => state.chart);
+
+  const { difficultyLabel, scale, chartMode, maxHeight }: LoadConfigOptionType = useAppSelector<LoadConfigOptionType>(
+    (state) => state.UIOptions.loadConfigUI
+  );
+  //
+  useEffect(() => {
+    if (status !== previousStatusRef.current) {
+      // Dispatch your action here conditionally
+      console.log("Change in status detected");
+      console.log(previousStatusRef.current + " to " + status);
+      if (status === "rawLoaded") {
+        console.log("Dispatch action to parseFile");
+        dispatch(parseFile(raw));
+      }
+      else if(status === "valid"){
+        console.log("Dispatch action to generate Canvas Chip data from DTXObject Object");
+        const drawingOptions: DTXDrawingConfig = {
+          difficultyLabel: difficultyLabel,
+          scale: scale,
+          chartMode: chartMode,
+          maxHeight: maxHeight,
+          gameMode: "Drum",
+          isLevelShown: true
+        };
+        console.log(drawingOptions);
+        dispatch(loadDtxJsonIntoEngine({dtxJson: dtxJsonObject, drawingOptions}));
+      }
+    }
+
+    // Update the reference to the current nestedField value
+    previousStatusRef.current = status;
+  }, [status, raw, dispatch, difficultyLabel, scale, chartMode, maxHeight]);
 
   const [selectedItemNum, setSelectedItemNum] = useState<number>(0);
 

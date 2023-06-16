@@ -76,8 +76,8 @@ interface DTXChip {
   barNumber: number;
   lineNumberInBar: number;
   timePosition: number;
-  chipCode: String;
-  laneType: String;
+  chipCode: string;
+  laneType: string;
 }
 
 interface DTXLaneChipCounter {
