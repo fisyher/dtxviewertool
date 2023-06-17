@@ -46,7 +46,7 @@ export const loadDtxJsonIntoEngine = createAsyncThunk<CanvasChartState, {dtxJson
         try {
           const canvasPositioner: DtxCanvasPositioner = new DtxCanvasPositioner(dtxJson, drawingOptions);
           resolve({
-            canvasChipPositions: canvasPositioner.getCanvasChipPositionsForDrawing(),
+            canvasChipPositions: canvasPositioner.getCanvasDataForDrawing(),
             gameMode: drawingOptions.gameMode,
             status: "loaded",
             error: "",
