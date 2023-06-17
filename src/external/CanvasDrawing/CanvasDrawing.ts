@@ -17,7 +17,7 @@ type CanvasTextOptions = {
 };
 
 export default class CanvasDrawing {
-  static DEFAULT_BACKGROUND_COLOR = "#121212";
+  static DEFAULT_BACKGROUND_COLOR = "#1f1f1f";
 
   static DM_CHIP_COLOR_INFO: { [key: string]: { color: string } } = {
     Bar: { color: "#b1b1b1" },
@@ -36,31 +36,53 @@ export default class CanvasDrawing {
     BPMMarker: { color: "#7f7f7f" },
   };
 
-  public static drawAllChipsOntoCanvas(
-    canvasObject: fabric.StaticCanvas,
-    canvasData: DTXCanvasDataType
-  ) {
-    //
+  public static drawAllChipsOntoCanvas(canvasObject: fabric.StaticCanvas, canvasData: DTXCanvasDataType) {
+    
+    //Draw all panels first
+    for (let index = 0; index < canvasData.frameRect.length; index++) {
+      const currFrameRect : DTXRect = canvasData.frameRect[index];
+
+      this.addRectangle(canvasObject,
+        {...currFrameRect},
+        { fill: this.DEFAULT_BACKGROUND_COLOR })
+    }
+    
+    //Draw all lines and chips
     for (let index = 0; index < canvasData.chipPositions.length; index++) {
       const element: DTXChipPixelRectPos = canvasData.chipPositions[index];
 
       this.addChip(
         canvasObject,
-        {  posX: element.rectPos.posX, posY: element.rectPos.posY, width: element.rectPos.width, height: element.rectPos.height },
+        {
+          posX: element.rectPos.posX,
+          posY: element.rectPos.posY,
+          width: element.rectPos.width,
+          height: element.rectPos.height,
+        },
         { fill: CanvasDrawing.DM_CHIP_COLOR_INFO[element.laneType].color }
       );
     }
 
+    //Finally draw all text objects
     for (let index = 0; index < canvasData.textPositions.length; index++) {
       const element: DTXTextRectPos = canvasData.textPositions[index];
 
       this.addText(
         canvasObject,
-        {  posX: element.rectPos.posX, posY: element.rectPos.posY, width: element.rectPos.width, height: element.rectPos.height },
+        {
+          posX: element.rectPos.posX,
+          posY: element.rectPos.posY,
+          width: element.rectPos.width,
+          height: element.rectPos.height,
+        },
         element.text,
-        { fill: element.color, fontFamily: element.fontFamily, fontSize: element.fontSize, fontWeight: element.fontWeight }
+        {
+          fill: element.color,
+          fontFamily: element.fontFamily,
+          fontSize: element.fontSize,
+          fontWeight: element.fontWeight,
+        }
       );
-      
     }
   }
 
@@ -85,7 +107,28 @@ export default class CanvasDrawing {
     canvasObject.add(rect);
   }
 
-  private static addText(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, text: string, textOptions: CanvasTextOptions){
+  private static addRectangle(
+    canvasObject: fabric.StaticCanvas,
+    positionSize: DTXRect,
+    drawOptions: CanvasDrawOptions
+  ) {
+    const rect = new fabric.Rect({
+      fill: drawOptions.fill,
+      width: positionSize.width,
+      height: positionSize.height,
+      left: positionSize.posX,
+      top: positionSize.posY,
+    });
+
+    canvasObject.add(rect);
+  }
+
+  private static addText(
+    canvasObject: fabric.StaticCanvas,
+    positionSize: DTXRect,
+    text: string,
+    textOptions: CanvasTextOptions
+  ) {
     /**
      * "BARNUM":new fabric.Text('000',{
     // backgroundColor: 'black',
@@ -95,23 +138,23 @@ export default class CanvasDrawing {
      */
 
     const textObject = new fabric.Text(text, {
-        left: positionSize.posX,
-        top: positionSize.posY,
-        fill: textOptions.fill ? textOptions.fill : "#ffffff",
-        fontSize: textOptions.fontSize ? textOptions.fontSize : 20,
-        fontWeight: textOptions.fontWeight ? textOptions.fontWeight : "",
-        fontFamily: textOptions.fontFamily ? textOptions.fontFamily : "Times New Roman",
-        originY: textOptions.originY ? textOptions.originY : "center",
-        originX: textOptions.originX ? textOptions.originX : "left"
+      left: positionSize.posX,
+      top: positionSize.posY,
+      fill: textOptions.fill ? textOptions.fill : "#ffffff",
+      fontSize: textOptions.fontSize ? textOptions.fontSize : 20,
+      fontWeight: textOptions.fontWeight ? textOptions.fontWeight : "",
+      fontFamily: textOptions.fontFamily ? textOptions.fontFamily : "Times New Roman",
+      originY: textOptions.originY ? textOptions.originY : "center",
+      originX: textOptions.originX ? textOptions.originX : "left",
     });
 
-    const currTextWidth : number | undefined = textObject.width;
-    if(positionSize.width && currTextWidth && currTextWidth >  positionSize.width){
-        textObject.scaleToWidth(positionSize.width); //positionSize.width/currTextWidth required for laptop browser but why? Scale becomes relative??? Behaviour different from jsfiddle...
+    const currTextWidth: number | undefined = textObject.width;
+    if (positionSize.width && currTextWidth && currTextWidth > positionSize.width) {
+      textObject.scaleToWidth(positionSize.width); //positionSize.width/currTextWidth required for laptop browser but why? Scale becomes relative??? Behaviour different from jsfiddle...
     }
 
     canvasObject.add(textObject);
-}
+  }
 
   // function addLine(positionSize, drawOptions){
 

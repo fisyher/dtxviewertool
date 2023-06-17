@@ -60,6 +60,7 @@ interface DTXTextRectPos {
 interface DTXCanvasDataType {
     chipPositions: DTXChipPixelRectPos[];
     textPositions: DTXTextRectPos[];
+    frameRect: DTXRect[];
     canvasSize: {width: number, height: number};
 }
 

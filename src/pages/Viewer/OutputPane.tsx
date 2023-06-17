@@ -1,4 +1,4 @@
-import { Paper, Typography, Card, CardContent } from "@mui/material";
+import { Paper, Typography, Card, CardContent, Box } from "@mui/material";
 import FabricCanvas from "../../components/FabricCanvas/FabricCanvas";
 import { CanvasEngineOverallState } from "../../app/reducers/canvasEngineReducer";
 import { useAppSelector } from "../../app/hooks";
@@ -53,19 +53,15 @@ const OutputPane: React.FC = () => {
     </Typography>
     This is the main viewer
     {/* <ProTip />*/}
-    <Card variant="outlined">
+    <Box sx={{overflow: 'auto', maxHeight: '80vh', maxWidth: '75vw'}}>
+    {fabricComponentsForDrum}
+    </Box>
+    {/* <Card variant="outlined">
       <CardContent sx={{overflow: 'auto', maxHeight: '80vh', maxWidth: '75vw'}}>
         <Typography variant="h5">Card Top</Typography>
-        {fabricComponentsForDrum}
-        {/* 2 Fabric Canvas to simulate large chart */}
-        {/* <FabricCanvas
-          id="canvas-1"
-          triggerDraw={0}
-          canvasProps={{width: 16000, height: 3000, backgroundColor: "#000000"}}
-          drawFunction={drawCanvasFunction}
-        ></FabricCanvas> */}        
+                
       </CardContent>
-    </Card>
+    </Card> */}
   </Paper>);
 }
 

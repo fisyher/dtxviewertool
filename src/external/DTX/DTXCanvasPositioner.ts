@@ -17,6 +17,11 @@ interface DTXInterimBarPosType {
   canvasSheetIndex: number;
 }
 
+interface DTXFrameRect {
+  rectPos: DTXRect;
+  canvasSheetIndex: number;
+}
+
 export class DtxCanvasPositioner {
   readonly DEFAULT_SCALE = 1.0;
   readonly MIN_SCALE = 0.5;
@@ -40,7 +45,7 @@ export class DtxCanvasPositioner {
     right: 0,
   };
   //Does not include left+right margins
-  readonly BODY_FRAME_WIDTH = 320;
+  readonly BODY_FRAME_WIDTH = 300;
 
   //Base PIXELS_PER_SECOND is 192 px at scale 1.0
   //This is equivalent of a drawing a full 4/4 bar at 240 BPM with 192 pixels
@@ -71,20 +76,20 @@ export class DtxCanvasPositioner {
 
   //Put in a map and reference this map instead in case need to change
   readonly DM_CHIP_POS_SIZE_INFO: { [key: string]: { posX: number; width: number; height: number } } = {
-    Bar: { posX: 70, width: 200, height: 2 },
-    QuarterBar: { posX: 70, width: 200, height: 1 },
-    BGM: { posX: 70, width: 200, height: 2 },
-    LeftCrashCymbal: { posX: 70, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
-    "Hi-Hat": { posX: 94, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    LeftBassPedal: { posX: 112, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    Snare: { posX: 130, width: this.DEFAULT_CHIP_WIDTH + 3, height: this.DEFAULT_CHIP_HEIGHT },
-    "Hi-Tom": { posX: 151, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    RightBassPedal: { posX: 169, width: this.DEFAULT_CHIP_WIDTH + 5, height: this.DEFAULT_CHIP_HEIGHT },
-    "Low-Tom": { posX: 192, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    "Floor-Tom": { posX: 210, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-    RightCrashCymbal: { posX: 228, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
-    RideCymbal: { posX: 252, width: this.DEFAULT_CHIP_WIDTH + 1, height: this.DEFAULT_CHIP_HEIGHT },
-    BPMMarker: { posX: 52, width: this.DEFAULT_CHIP_WIDTH, height: 2 },
+    Bar: { posX: 60, width: 200, height: 2 },
+    QuarterBar: { posX: 60, width: 200, height: 1 },
+    BGM: { posX: 60, width: 200, height: 2 },
+    LeftCrashCymbal: { posX: 60, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
+    "Hi-Hat": { posX: 84, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    LeftBassPedal: { posX: 102, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    Snare: { posX: 120, width: this.DEFAULT_CHIP_WIDTH + 3, height: this.DEFAULT_CHIP_HEIGHT },
+    "Hi-Tom": { posX: 141, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    RightBassPedal: { posX: 159, width: this.DEFAULT_CHIP_WIDTH + 5, height: this.DEFAULT_CHIP_HEIGHT },
+    "Low-Tom": { posX: 182, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    "Floor-Tom": { posX: 200, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
+    RightCrashCymbal: { posX: 218, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
+    RideCymbal: { posX: 242, width: this.DEFAULT_CHIP_WIDTH + 1, height: this.DEFAULT_CHIP_HEIGHT },
+    BPMMarker: { posX: 50, width: 10, height: 2 },
   };
 
   private barIndexToFrameSheetMapping: DTXInterimBarPosType[];
@@ -105,7 +110,7 @@ export class DtxCanvasPositioner {
 
     //Compute the interim mapping of Bar to Frame/Sheet index, number of canvas, body section height and canvas-width
     //Ensure entire bars would be drawn within the same frame
-    const { barFrameSheetMapping, numOfCanvas, bodySectionHeightPerCanvas, widthPerCanvas } =
+    const { barFrameSheetMapping, numOfCanvas, bodySectionHeightPerCanvas, widthPerCanvas, partialFrameRect } =
       this.computeBarIndexToFrameSheetMapping(dtxJson, maxBodySectionRect.height);
     this.barIndexToFrameSheetMapping = barFrameSheetMapping;
     this.bodySectionHeightPerCanvas = bodySectionHeightPerCanvas;
@@ -115,12 +120,26 @@ export class DtxCanvasPositioner {
       this.canvasDTXObjects.push({
         chipPositions: [],
         textPositions: [],
+        frameRect: [],
         canvasSize: {
           width: widthPerCanvas[index],
           height: this.canvasHeightGivenBodySectionHeight(bodySectionHeightPerCanvas[index]),
         },
       });
     }
+
+    //
+    //Update posY for all frames, now that we have the actual body section height
+    for (let index = 0; index < partialFrameRect.length; index++) {
+      const frameRect: DTXFrameRect = partialFrameRect[index];
+      const currCanvasHeight: number = this.canvasHeightGivenBodySectionHeight(bodySectionHeightPerCanvas[frameRect.canvasSheetIndex]);
+      frameRect.rectPos.posY = currCanvasHeight - (this.FOOTER_SECTION_HEIGHT +
+        this.SECTION_SPLIT_MARGIN +
+        this.BODY_FRAME_MARGINS.top + frameRect.rectPos.height);
+        //Also push the frameRect info into canvasDTXObjects
+        this.canvasDTXObjects[frameRect.canvasSheetIndex].frameRect.push({...frameRect.rectPos});
+    }
+
 
     //Compute pixel positions for chips to be drawn and store into canvasDTXObjects
     this.computeChipPositionInCanvas(dtxJson);
@@ -271,7 +290,7 @@ export class DtxCanvasPositioner {
             chipLinePosInCanvas.posX +
             this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
             this.DM_CHIP_POS_SIZE_INFO["Bar"].width +
-            2,
+            5,
           posY: chipLinePosInCanvas.posY,
           width: 50,
           height: 21,
@@ -289,8 +308,11 @@ export class DtxCanvasPositioner {
 
     //Compute for Quarter bars
     for (let index = 0; index < dtxJson.quarterBarLines.length; index++) {
-      const quarterBarLine : DTXLine = dtxJson.quarterBarLines[index];
-      const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(quarterBarLine.barNumber, quarterBarLine.timePosition);
+      const quarterBarLine: DTXLine = dtxJson.quarterBarLines[index];
+      const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
+        quarterBarLine.barNumber,
+        quarterBarLine.timePosition
+      );
 
       //Bar Line
       const chipPixelPos: DTXChipPixelRectPos = {
@@ -302,7 +324,7 @@ export class DtxCanvasPositioner {
           height: this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].height,
         },
       };
-      
+
       this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
     }
 
@@ -326,7 +348,7 @@ export class DtxCanvasPositioner {
       //BPM Value as text
       const textPos: DTXTextRectPos = {
         rectPos: {
-          posX: chipLinePosInCanvas.posX + 15,
+          posX: chipLinePosInCanvas.posX + 10,
           posY: chipLinePosInCanvas.posY,
           width: 50,
           height: 15,
@@ -402,10 +424,12 @@ export class DtxCanvasPositioner {
     numOfCanvas: number;
     bodySectionHeightPerCanvas: number[];
     widthPerCanvas: number[];
+    partialFrameRect: DTXFrameRect[];
   } {
     let barIndexToFrameSheetMapping: DTXInterimBarPosType[] = [];
     let greatestFrameHeightPerCanvas: number[] = [];
     let returnedWidthPerCanvas: number[] = [];
+    let returnedFrameRect: DTXFrameRect[] = [];
     let currFrameNum: number = 0;
     let currFramePosY: number = 0;
     let currGreatestFrameHeight: number = 0;
@@ -417,6 +441,26 @@ export class DtxCanvasPositioner {
 
       //Check if current bar can fit into current frame
       if (currFramePosY + currBarHeightInPx > bodySectionHeight) {
+        //The case for current bar UNABLE to fit into current frame
+        //Current Frame Pos Y before reset would be the Height for this frame
+        //Position Y are set to 0 first because the final Body Section Height is not confirmed until end of this loop
+        returnedFrameRect.push({
+          rectPos:{
+            posX: this.BODY_FRAME_MARGINS.left + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
+            currFrameNum *
+              (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+            posY: 0,
+            width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
+            height: currFramePosY
+          },
+          canvasSheetIndex: currCanvasSheetIndex
+        });
+
+        //Check For largest height value
+        if (currFramePosY > currGreatestFrameHeight) {
+          currGreatestFrameHeight = currFramePosY;
+        }
+
         //Check if next frame can fit within current canvas sheet
         if (currFrameNum + 1 > this.MAX_PAGEPERCANVAS) {
           returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1));
@@ -424,11 +468,6 @@ export class DtxCanvasPositioner {
           currFrameNum = 0;
         } else {
           currFrameNum++;
-        }
-
-        //Current Frame Pos Y before reset would be the highest Bar for this frame
-        if (currFramePosY > currGreatestFrameHeight) {
-          currGreatestFrameHeight = currFramePosY;
         }
 
         //Reset Frame Height
@@ -465,11 +504,25 @@ export class DtxCanvasPositioner {
       returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1));
     }
 
+    //Push the final frame rect after looping is done
+    returnedFrameRect.push({
+      rectPos:{
+        posX: this.BODY_FRAME_MARGINS.left + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
+        currFrameNum *
+          (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+        posY: 0,
+        width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
+        height: currFramePosY
+      },
+      canvasSheetIndex: currCanvasSheetIndex
+    });
+
     return {
       barFrameSheetMapping: barIndexToFrameSheetMapping,
       numOfCanvas: currCanvasSheetIndex + 1,
       bodySectionHeightPerCanvas: greatestFrameHeightPerCanvas,
       widthPerCanvas: returnedWidthPerCanvas,
+      partialFrameRect: returnedFrameRect
     };
   }
 
