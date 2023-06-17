@@ -7,7 +7,7 @@ import type { GameModeType } from "../../external/DTX/DTXCanvasTypes";
 type CanvasEngineStatusType = "empty" | "loading" | "loaded" | "rendering" | "done" | "error";
 
 interface CanvasChartState {
-  canvasChipPositions: DTXCanvasDataType[];
+  canvasDTXObjects: DTXCanvasDataType[];
   gameMode: GameModeType;
   status: CanvasEngineStatusType;
   error: string;
@@ -46,7 +46,7 @@ export const loadDtxJsonIntoEngine = createAsyncThunk<CanvasChartState, {dtxJson
         try {
           const canvasPositioner: DtxCanvasPositioner = new DtxCanvasPositioner(dtxJson, drawingOptions);
           resolve({
-            canvasChipPositions: canvasPositioner.getCanvasDataForDrawing(),
+            canvasDTXObjects: canvasPositioner.getCanvasDataForDrawing(),
             gameMode: drawingOptions.gameMode,
             status: "loaded",
             error: "",
@@ -64,7 +64,7 @@ export const loadDtxJsonIntoEngine = createAsyncThunk<CanvasChartState, {dtxJson
 
 //Initial state
 const emptyCanvasChartState = {
-  canvasChipPositions: [],
+  canvasDTXObjects: [],
   status: "empty",
   gameMode: "Drum",
   error: "",

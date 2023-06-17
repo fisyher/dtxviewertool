@@ -63,8 +63,8 @@ export class DtxCanvasPositioner {
 
   //Put in a map and reference this map instead in case need to change
   readonly DM_CHIP_POS_SIZE_INFO: { [key: string]: { posX: number; width: number; height: number } } = {
-    Bar: { posX: 70, width: 220, height: 2 },
-    BGM: { posX: 70, width: 220, height: 2 },
+    Bar: { posX: 70, width: 200, height: 2 },
+    BGM: { posX: 70, width: 200, height: 2 },
     LeftCrashCymbal: { posX: 70, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
     "Hi-Hat": { posX: 94, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
     LeftBassPedal: { posX: 112, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },

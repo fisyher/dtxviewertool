@@ -14,6 +14,8 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasPro
   const [canvasObject, setCanvasObject] = useState<fabric.StaticCanvas | null>(null);
 
   useEffect(() => {
+    //console.log("Dispose canvas object if exist");
+    //canvasObject?.dispose();
     console.log("create new canvas object");
     setCanvasObject(
       new fabric.StaticCanvas(id, {
@@ -30,7 +32,7 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasPro
         setCanvasObject(null);
       }
     };
-  }, []);
+  }, [canvasProps]);
 
   useEffect(() => {
     drawFunction(canvasObject, triggerDraw);
