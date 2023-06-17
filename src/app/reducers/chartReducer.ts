@@ -71,7 +71,15 @@ export const chartSlice = createSlice({
   initialState,
   reducers: {
     reset: (state) => {
-      state = { ...initialState };
+      
+      state.raw = "";
+      state.error = initialState.error;
+      state.status = initialState.status;
+      state.dtxJsonObject = {
+        ...EmptyDTXJson,
+        songInfo: { ...EmptyDTXJson.songInfo },
+        laneChipCounter: { ...EmptyDTXJson.laneChipCounter },
+      };
     },
     // Use the PayloadAction type to declare the contents of `action.payload`
     setDtx: (state, action: PayloadAction<String>) => {

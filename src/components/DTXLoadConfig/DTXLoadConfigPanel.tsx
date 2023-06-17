@@ -2,8 +2,8 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import React, { ChangeEvent, useEffect, useRef } from "react";
 import { useAppSelector, useAppDispatch } from "../../app/hooks";
-import { ChartState, ChartStatusType, parseFile, readFile } from "../../app/reducers/chartReducer";
-import { FormControl, FormGroup, Grid, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { ChartState, ChartStatusType, parseFile, readFile, reset as resetDTXJson } from "../../app/reducers/chartReducer";
+import { Button, FormControl, FormGroup, Grid, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import {
   LoadConfigOptionType,
   setChartMode,
@@ -12,6 +12,7 @@ import {
   setScale,
 } from "../../app/reducers/optionsReducer";
 import { ChartModeType, ChartModes, DifficultyLabelType, DifficultyLabels } from "../../external/DTX/DTXCanvasTypes";
+import { reset as resetCanvasEngine } from "../../app/reducers/canvasEngineReducer";
 
 const ScaleOptions: number[] = [0.5, 1.0, 1.5, 2.0];
 const HeightOptions: number[] = [2000, 2500, 3000, 3500, 4000];
@@ -46,8 +47,17 @@ const DTXLoadConfigPanel: React.FC = () => {
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      //
+      dispatch(resetCanvasEngine());
+      dispatch(resetDTXJson());
       dispatch(readFile(file));
     }
+  };
+
+  const handleResetClickEvent = () => {
+    console.log("Reset clicked");
+    dispatch(resetCanvasEngine());
+    dispatch(resetDTXJson());
   };
 
   //Handle Selection of Difficulty Label
@@ -79,6 +89,7 @@ const DTXLoadConfigPanel: React.FC = () => {
         <input type="file" accept=".dtx, .gda" onChange={handleFileChange} />
         {status === "loading" && <p>Loading file...</p>}
       </div>
+      <Button onClick={handleResetClickEvent}>Reset</Button>
       <Typography variant="h4" component="h1" gutterBottom>
         Draw Options
       </Typography>

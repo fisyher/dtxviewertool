@@ -23,8 +23,11 @@ const OutputPane: React.FC = () => {
         }
       }, [Drum]);
 
+    
+
     const fabricComponentsForDrum = useMemo(() => {
       let retComponents : ReactNode = <></>;
+      console.log("in useMemo: status is " + Drum.status);
       if(Drum.status === 'loaded'){
         retComponents = Drum.canvasDTXObjects.map((canvasDTXObject, index) => {
           return (
@@ -37,9 +40,11 @@ const OutputPane: React.FC = () => {
             ></FabricCanvas>
           );
         });
+      }else{
+        //console.log("in useMemo: status is " + Drum.status);
       }
       return retComponents;
-    }, [Drum, drawCanvasFunction])
+    }, [Drum]);
 
 
     return (<Paper sx={{ p: 2 }} className="my-paper">

@@ -83,7 +83,24 @@ export const canvasEngineSlice = createSlice({
   initialState,
   reducers: {
     reset: (state) => {
-      state = { ...initialState };
+      
+      state.overallStatus = initialState.overallStatus;
+      state.Drum = {
+        ...emptyCanvasChartState,
+        canvasDTXObjects: [],
+        gameMode: "Drum"
+      };
+      state.Guitar = {
+        ...emptyCanvasChartState,
+        canvasDTXObjects: [],
+        gameMode: "Guitar"
+      };
+      state.Bass = {
+        ...emptyCanvasChartState,
+        canvasDTXObjects: [],
+        gameMode: "Bass"
+      };
+      
     },
     // Use the PayloadAction type to declare the contents of `action.payload`
     setLoadingStatus: (state, action: PayloadAction<keyof typeof initialState>) => {
