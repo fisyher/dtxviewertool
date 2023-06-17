@@ -1,4 +1,4 @@
-import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson } from "./DTXJsonTypes";
+import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson, DTXLine } from "./DTXJsonTypes";
 import DTXJson from "./DTXJsonTypes";
 
 //Intermediate interfaces
@@ -136,6 +136,8 @@ export class DtxFileParser {
 
       const bpmSegmentArray: DTXBpmSegment[] = this.createBpmSegmentArray(songDuration);
       this.finalJson.bpmSegments = bpmSegmentArray;
+
+      this.finalJson.quarterBarLines = this.createQuarterBarLineArray(this.finalJson.bars);
 
       this.laneBarChipsArray = this.extractAndCreateLaneChipsArray(content);
 
@@ -291,6 +293,31 @@ export class DtxFileParser {
     }
 
     return bpmSegments;
+  }
+
+  private createQuarterBarLineArray(barArray: DTXBar[]): DTXLine[] {
+
+    let retArray: DTXLine[] = [];
+
+    for (let index = 0; index < barArray.length; index++) {
+      const element : DTXBar = barArray[index];
+
+      const numQuarterLines = Math.floor(element.lineCount / (LINES_IN_1_BAR / 4));
+      
+      for (let j = 0; j < numQuarterLines; j++) {
+        const currLineNumber = j * (LINES_IN_1_BAR / 4);
+
+        retArray.push({
+          barNumber: index,
+          lineNumberInBar: currLineNumber,
+          timePosition: this.calculateAbsoluteTime(index, currLineNumber)
+        });
+        
+      }
+
+    }
+
+    return retArray;
   }
 
   private createBarDataArray(): DTXBar[] {
@@ -452,9 +479,11 @@ export class DtxFileParser {
             const element = chipsItemArray[j];
 
             retArray.push({
-              barNumber: element.barNum,
-              lineNumberInBar: element.lineNum,
-              timePosition: this.calculateAbsoluteTime(element.barNum, element.lineNum),
+              lineTimePosition: {
+                barNumber: element.barNum,
+                lineNumberInBar: element.lineNum,
+                timePosition: this.calculateAbsoluteTime(element.barNum, element.lineNum),
+              },
               chipCode: element.chipCode,
               laneType: inputLaneType,
             });

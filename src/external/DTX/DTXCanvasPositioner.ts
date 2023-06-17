@@ -1,5 +1,13 @@
-import DTXJson, { DTXBar, DTXBpmSegment, DTXChip } from "./DTXJsonTypes";
-import { DTXRect, DTXChipPixelRectPos, DTXDrawingConfig, DTXCanvasDataType, DTXTextRectPos, GameModeType, ChartModeType } from "./DTXCanvasTypes";
+import DTXJson, { DTXBar, DTXBpmSegment, DTXChip, DTXLine } from "./DTXJsonTypes";
+import {
+  DTXRect,
+  DTXChipPixelRectPos,
+  DTXDrawingConfig,
+  DTXCanvasDataType,
+  DTXTextRectPos,
+  GameModeType,
+  ChartModeType,
+} from "./DTXCanvasTypes";
 import { convertNumberToFormattedText, convertSecondsToMMssFormat } from "../utility/basicStringFormatter";
 
 interface DTXInterimBarPosType {
@@ -64,6 +72,7 @@ export class DtxCanvasPositioner {
   //Put in a map and reference this map instead in case need to change
   readonly DM_CHIP_POS_SIZE_INFO: { [key: string]: { posX: number; width: number; height: number } } = {
     Bar: { posX: 70, width: 200, height: 2 },
+    QuarterBar: { posX: 70, width: 200, height: 1 },
     BGM: { posX: 70, width: 200, height: 2 },
     LeftCrashCymbal: { posX: 70, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
     "Hi-Hat": { posX: 94, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
@@ -106,7 +115,10 @@ export class DtxCanvasPositioner {
       this.canvasDTXObjects.push({
         chipPositions: [],
         textPositions: [],
-        canvasSize: { width: widthPerCanvas[index], height: this.canvasHeightGivenBodySectionHeight(bodySectionHeightPerCanvas[index]) },
+        canvasSize: {
+          width: widthPerCanvas[index],
+          height: this.canvasHeightGivenBodySectionHeight(bodySectionHeightPerCanvas[index]),
+        },
       });
     }
 
@@ -124,10 +136,9 @@ export class DtxCanvasPositioner {
   private getCurrentDifficultyLevel(dtxJson: DTXJson, gameMode: GameModeType): number {
     let diffLevel = dtxJson.songInfo.difficultyLevelDrum;
 
-    if(gameMode === 'Guitar'){
+    if (gameMode === "Guitar") {
       diffLevel = dtxJson.songInfo.difficultyLevelGuitar;
-    }
-    else if(gameMode === 'Bass'){
+    } else if (gameMode === "Bass") {
       diffLevel = dtxJson.songInfo.difficultyLevelBass;
     }
 
@@ -137,92 +148,90 @@ export class DtxCanvasPositioner {
   private getCurrentNoteCount(dtxJson: DTXJson, gameMode: GameModeType): number {
     let noteCount = dtxJson.songInfo.noteCountDrum;
 
-    if(gameMode === 'Guitar'){
+    if (gameMode === "Guitar") {
       noteCount = dtxJson.songInfo.noteCountGuitar;
-    }
-    else if(gameMode === 'Bass'){
+    } else if (gameMode === "Bass") {
       noteCount = dtxJson.songInfo.noteCountBass;
     }
 
     return noteCount;
-
   }
 
-  private convertDifficultyLevelToText(level: number, chartMode: ChartModeType): string{
-    if(chartMode === 'Classic'){
-      return Math.floor(level*10).toFixed(0);
+  private convertDifficultyLevelToText(level: number, chartMode: ChartModeType): string {
+    if (chartMode === "Classic") {
+      return Math.floor(level * 10).toFixed(0);
     }
 
     return level.toFixed(2);
-
   }
 
-  private createTextInfoForDrawing(dtxJson: DTXJson, gameMode: GameModeType, chartMode: ChartModeType): void{
-    
-    let localTextPostArray : DTXTextRectPos[] = [];
+  private createTextInfoForDrawing(dtxJson: DTXJson, gameMode: GameModeType, chartMode: ChartModeType): void {
+    let localTextPostArray: DTXTextRectPos[] = [];
 
     //Title
     const titlePos: DTXTextRectPos = {
-      rectPos:{
+      rectPos: {
         posX: 70,
         posY: 15,
         width: 400,
-        height: 25
+        height: 25,
       },
       fontFamily: "Arial",
       fontWeight: 200,
       fontSize: 24,
       color: "#ffffff",
-      text: dtxJson.songInfo.title
+      text: dtxJson.songInfo.title,
     };
 
     //Artist
     const artistPos: DTXTextRectPos = {
-      rectPos:{
+      rectPos: {
         posX: 70,
         posY: 45,
         width: 400,
-        height: 25
+        height: 25,
       },
       fontFamily: "Arial",
       fontWeight: 200,
       fontSize: 16,
       color: "#ffffff",
-      text: dtxJson.songInfo.artist
+      text: dtxJson.songInfo.artist,
     };
 
-
     //Difficulty Level
-    const diffLevelText : string = this.convertDifficultyLevelToText(this.getCurrentDifficultyLevel(dtxJson, gameMode), chartMode);
+    const diffLevelText: string = this.convertDifficultyLevelToText(
+      this.getCurrentDifficultyLevel(dtxJson, gameMode),
+      chartMode
+    );
     const BPMText: string = dtxJson.bpmSegments[0].bpm.toFixed(0);
     const durationText: string = convertSecondsToMMssFormat(dtxJson.songInfo.songDuration);
     const noteCount: number = this.getCurrentNoteCount(dtxJson, gameMode);
     const difficultyLevelPos: DTXTextRectPos = {
-      rectPos:{
+      rectPos: {
         posX: 710,
         posY: 15,
         width: 400,
-        height: 25
+        height: 25,
       },
       fontFamily: "Arial",
       fontWeight: 200,
       fontSize: 24,
       color: "#ffffff",
-      text: `Level ${diffLevelText}`
+      text: `Level ${diffLevelText}`,
     };
 
     const otherSongInfoPos: DTXTextRectPos = {
-      rectPos:{
+      rectPos: {
         posX: 710,
         posY: 45,
         width: 400,
-        height: 25
+        height: 25,
       },
       fontFamily: "Arial",
       fontWeight: 200,
       fontSize: 16,
       color: "#ffffff",
-      text: `BPM ${BPMText} Length ${durationText} Notes ${noteCount}`
+      text: `BPM ${BPMText} Length ${durationText} Notes ${noteCount}`,
     };
 
     //
@@ -233,7 +242,7 @@ export class DtxCanvasPositioner {
 
     this.canvasDTXObjects.forEach((canvasData) => {
       canvasData.textPositions = canvasData.textPositions.concat(localTextPostArray);
-    })
+    });
   }
 
   private computeChipPositionInCanvas(dtxJson: DTXJson): void {
@@ -257,21 +266,44 @@ export class DtxCanvasPositioner {
 
       //Bar Number
       const textPos: DTXTextRectPos = {
-        rectPos:{
-          posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].width + 2,
+        rectPos: {
+          posX:
+            chipLinePosInCanvas.posX +
+            this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
+            this.DM_CHIP_POS_SIZE_INFO["Bar"].width +
+            2,
           posY: chipLinePosInCanvas.posY,
           width: 50,
-          height: 21
+          height: 21,
         },
         fontFamily: "Arial",
         fontWeight: 200,
         fontSize: 18,
         color: "#ffffff",
-        text: convertNumberToFormattedText(index, 3)        
+        text: convertNumberToFormattedText(index, 3),
       };
 
       this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
       this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].textPositions.push(textPos);
+    }
+
+    //Compute for Quarter bars
+    for (let index = 0; index < dtxJson.quarterBarLines.length; index++) {
+      const quarterBarLine : DTXLine = dtxJson.quarterBarLines[index];
+      const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(quarterBarLine.barNumber, quarterBarLine.timePosition);
+
+      //Bar Line
+      const chipPixelPos: DTXChipPixelRectPos = {
+        laneType: "QuarterBar",
+        rectPos: {
+          posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].posX,
+          posY: chipLinePosInCanvas.posY,
+          width: this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].width,
+          height: this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].height,
+        },
+      };
+      
+      this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
     }
 
     //Compute for BPM change marker
@@ -293,17 +325,17 @@ export class DtxCanvasPositioner {
 
       //BPM Value as text
       const textPos: DTXTextRectPos = {
-        rectPos:{
+        rectPos: {
           posX: chipLinePosInCanvas.posX + 15,
           posY: chipLinePosInCanvas.posY,
           width: 50,
-          height: 15
+          height: 15,
         },
         fontFamily: "Arial",
         fontWeight: 100,
         fontSize: 12,
         color: "#ffffff",
-        text: bpmSegment.bpm.toFixed(2)        
+        text: bpmSegment.bpm.toFixed(2),
       };
 
       this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
@@ -313,7 +345,10 @@ export class DtxCanvasPositioner {
     //Compute for chips
     for (let index = 0; index < dtxJson.chips.length; index++) {
       const chip: DTXChip = dtxJson.chips[index];
-      const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(chip.barNumber, chip.timePosition);
+      const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
+        chip.lineTimePosition.barNumber,
+        chip.lineTimePosition.timePosition
+      );
 
       //
       const chipPixelPos: DTXChipPixelRectPos = {

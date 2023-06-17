@@ -72,13 +72,19 @@ interface DTXBpmSegment {
   duration: number;
 }
 
-interface DTXChip {
+interface DTXLine {
   barNumber: number;
   lineNumberInBar: number;
   timePosition: number;
+}
+
+interface DTXChip {
+  lineTimePosition: DTXLine;
   chipCode: string;
   laneType: string;
 }
+
+
 
 interface DTXLaneChipCounter {
   [type: string]: number;
@@ -89,6 +95,7 @@ interface DTXJson {
   metadata?: DTXMetaDataType;
   chips: Array<DTXChip>;
   bars: Array<DTXBar>;
+  quarterBarLines: Array<DTXLine>;
   bpmSegments: Array<DTXBpmSegment>;
   laneChipCounter: DTXLaneChipCounter;
 }
@@ -107,11 +114,12 @@ const EmptyDTXJson: DTXJson = {
     noteCountBass: 0,
   },
   bars: [],
+  quarterBarLines: [],
   bpmSegments: [],
   chips: [],
   laneChipCounter: {},
 };
 
-export type { DTXBar, DTXBpmSegment, DTXChip, DTXSongInfoType, DTXMetaDataType };
+export type { DTXBar, DTXBpmSegment, DTXChip, DTXLine, DTXSongInfoType, DTXMetaDataType };
 export { EmptyDTXJson };
 export default DTXJson;

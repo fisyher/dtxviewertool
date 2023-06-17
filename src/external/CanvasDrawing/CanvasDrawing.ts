@@ -21,7 +21,8 @@ export default class CanvasDrawing {
 
   static DM_CHIP_COLOR_INFO: { [key: string]: { color: string } } = {
     Bar: { color: "#b1b1b1" },
-    BGM: { color: "red" },
+    QuarterBar: { color: "#535353" },
+    BGM: { color: "green" },
     LeftCrashCymbal: { color: "#ff4ca1" },
     "Hi-Hat": { color: "#579ead" },
     LeftBassPedal: { color: "#e7baff" },
