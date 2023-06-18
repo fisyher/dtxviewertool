@@ -231,7 +231,9 @@ export class DtxCanvasPositioner {
         const noteCount: number = this.getCurrentNoteCount(dtxJson, gameMode);
         const difficultyLevelPos: DTXTextRectPos = {
             rectPos: {
-                posX: 3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posX:
+                    3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) +
+                    this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
                 posY: 20,
                 width: 400,
                 height: 30
@@ -245,7 +247,9 @@ export class DtxCanvasPositioner {
 
         const otherSongInfoPos: DTXTextRectPos = {
             rectPos: {
-                posX: 3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posX:
+                    3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) +
+                    this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
                 posY: 50,
                 width: 400,
                 height: 25
