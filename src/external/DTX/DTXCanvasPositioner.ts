@@ -79,6 +79,7 @@ export class DtxCanvasPositioner {
         "Bar": { posX: 60, width: 200, height: 2 },
         "QuarterBar": { posX: 60, width: 200, height: 1 },
         "BGM": { posX: 60, width: 200, height: 2 },
+        "EndLine": { posX: 60, width: 200, height: 2 },
         "LeftCrashCymbal": { posX: 60, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
         "Hi-Hat": { posX: 84, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
         "LeftBassPedal": { posX: 102, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
@@ -405,6 +406,22 @@ export class DtxCanvasPositioner {
             this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
         }
 
+        //EndLine
+        const endLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
+            dtxJson.bars.length - 1,
+            dtxJson.songInfo.songDuration
+        );
+        const endLinePixelPos: DTXChipPixelRectPos = {
+            laneType: "EndLine",
+            rectPos: {
+                posX: endLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["EndLine"].posX,
+                posY: endLinePosInCanvas.posY,
+                width: this.DM_CHIP_POS_SIZE_INFO["EndLine"].width,
+                height: this.DM_CHIP_POS_SIZE_INFO["EndLine"].height
+            }
+        };
+
+        this.canvasDTXObjects[endLinePosInCanvas.canvasSheetIndex].chipPositions.push(endLinePixelPos);
         // return retResult;
     }
 
@@ -569,7 +586,12 @@ export class DtxCanvasPositioner {
         };
     }
 
-    //Compute the Pixel Position of an absolute time, PosX here is left-margin relative to its frame
+    /**
+     *
+     * @param barNum - BarNum index of the nearest bar within the same frame for this time position. This is usually the bar which the chip is associated with
+     * @param absTime - The absolute Time position in seconds
+     * @returns Returns the actual posX, posY and canvasSheetIndex for this time
+     */
     private computePixelPosFromAbsoluteTime(
         barNum: number,
         absTime: number

@@ -23,6 +23,7 @@ export default class CanvasDrawing {
         "Bar": { color: "#b1b1b1" },
         "QuarterBar": { color: "#535353" },
         "BGM": { color: "green" },
+        "EndLine": { color: "red" },
         "LeftCrashCymbal": { color: "#ff4ca1" },
         "Hi-Hat": { color: "#579ead" },
         "LeftBassPedal": { color: "#e7baff" },
