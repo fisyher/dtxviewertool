@@ -194,14 +194,14 @@ export class DtxCanvasPositioner {
         //Title
         const titlePos: DTXTextRectPos = {
             rectPos: {
-                posX: 70,
-                posY: 15,
-                width: 400,
-                height: 25
+                posX: this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posY: 20,
+                width: 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                height: 30
             },
             fontFamily: "Arial",
             fontWeight: 200,
-            fontSize: 24,
+            fontSize: 28,
             color: "#ffffff",
             text: dtxJson.songInfo.title
         };
@@ -209,10 +209,10 @@ export class DtxCanvasPositioner {
         //Artist
         const artistPos: DTXTextRectPos = {
             rectPos: {
-                posX: 70,
-                posY: 45,
-                width: 400,
-                height: 25
+                posX: this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posY: 50,
+                width: 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                height: 20
             },
             fontFamily: "Arial",
             fontWeight: 200,
@@ -231,22 +231,22 @@ export class DtxCanvasPositioner {
         const noteCount: number = this.getCurrentNoteCount(dtxJson, gameMode);
         const difficultyLevelPos: DTXTextRectPos = {
             rectPos: {
-                posX: 710,
-                posY: 15,
+                posX: 3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posY: 20,
                 width: 400,
-                height: 25
+                height: 30
             },
             fontFamily: "Arial",
             fontWeight: 200,
-            fontSize: 24,
+            fontSize: 28,
             color: "#ffffff",
             text: `Level ${diffLevelText}`
         };
 
         const otherSongInfoPos: DTXTextRectPos = {
             rectPos: {
-                posX: 710,
-                posY: 45,
+                posX: 3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posY: 50,
                 width: 400,
                 height: 25
             },
@@ -265,6 +265,14 @@ export class DtxCanvasPositioner {
 
         this.canvasDTXObjects.forEach((canvasData) => {
             canvasData.textPositions = canvasData.textPositions.concat(localTextPostArray);
+            //Add the Background Rect for the Header Section
+            const backgroundRect: DTXRect = {
+                posX: 0,
+                posY: 0,
+                width: canvasData.canvasSize.width,
+                height: this.HEADER_SECTION_HEIGHT
+            };
+            canvasData.frameRect.push(backgroundRect);
         });
     }
 
