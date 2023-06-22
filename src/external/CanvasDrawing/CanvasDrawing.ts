@@ -37,6 +37,93 @@ export default class CanvasDrawing {
         "BPMMarker": { color: "#7f7f7f" }
     };
 
+    static CHART_IMAGE_ASSETS: Record<string, HTMLImageElement> = {};
+
+    public static initLoadAllAssets(): void {
+        const imageAssetPromises: Promise<Record<string, HTMLImageElement>>[] = [];
+
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("LeftCrashCymbal", require("../../assets/images/leftcymbal_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Hi-Hat", require("../../assets/images/hihat_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Snare", require("../../assets/images/snare_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("LeftBassPedal", require("../../assets/images/leftbass_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("LeftHiHatPedal", require("../../assets/images/lefthihatpedal_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Hi-Tom", require("../../assets/images/hitom_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("RightBassPedal", require("../../assets/images/rightbass_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Low-Tom", require("../../assets/images/lowtom_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Floor-Tom", require("../../assets/images/floortom_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("RightCrashCymbal", require("../../assets/images/rightcymbal_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("RideCymbal", require("../../assets/images/ridecymbal_chip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "DrumBasicBannerSmall",
+                require("../../assets/images/DrumBasicBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "DrumAdvancedBannerSmall",
+                require("../../assets/images/DrumAdvancedBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "DrumExtremeBannerSmall",
+                require("../../assets/images/DrumExtremeBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "DrumMasterBannerSmall",
+                require("../../assets/images/DrumMasterBannerSmall.png")
+            )
+        );
+
+        Promise.all(imageAssetPromises)
+            .then((array) => {
+                array.forEach((item) => {
+                    CanvasDrawing.CHART_IMAGE_ASSETS = { ...CanvasDrawing.CHART_IMAGE_ASSETS, ...item };
+                });
+                console.log(CanvasDrawing.CHART_IMAGE_ASSETS);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    }
+
+    public static loadImageAsObject(name: string, url: string): Promise<Record<string, HTMLImageElement>> {
+        const promise = new Promise<Record<string, HTMLImageElement>>((resolve) => {
+            fabric.util.loadImage(url, (img) => {
+                const returnedObject: Record<string, HTMLImageElement> = {};
+                returnedObject[name] = img;
+                resolve(returnedObject);
+            });
+        });
+
+        return promise;
+    }
+
     public static drawAllChipsOntoCanvas(canvasObject: fabric.StaticCanvas, canvasData: DTXCanvasDataType) {
         //Draw all panels first
         for (let index = 0; index < canvasData.frameRect.length; index++) {
@@ -203,3 +290,6 @@ export default class CanvasDrawing {
     //     this._canvasObject.setZoom(factor);
     // }
 }
+
+//This will run before App.tsx is loaded and rendered on screen
+CanvasDrawing.initLoadAllAssets();

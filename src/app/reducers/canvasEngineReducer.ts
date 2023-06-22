@@ -6,8 +6,12 @@ import type { GameModeType } from "../../external/DTX/DTXCanvasTypes";
 
 type CanvasEngineStatusType = "empty" | "loading" | "loaded" | "rendering" | "done" | "error";
 
+interface NamedImageObject {
+    [key: string]: HTMLImageElement;
+}
+
 interface CanvasChartState {
-    canvasDTXObjects: DTXCanvasDataType[];
+    canvasDTXObjects: DTXCanvasDataType[];    
     gameMode: GameModeType;
     status: CanvasEngineStatusType;
     error: string;
@@ -19,19 +23,6 @@ interface CanvasEngineOverallState {
     Bass: CanvasChartState;
     overallStatus: string;
 }
-
-/*
-const someThunk = createAsyncThunk(
-   "users/someStatus"
-  async (arg, thunkAPI) => {
-    try {
-      const value = await promiseFunc()
-      return value
-   } catch(e) {
-       return thunkAPI.rejectWithValue(err.message);
-   }
-});
-*/
 
 type ErrorPayloadType = {
     errorMessage: any;

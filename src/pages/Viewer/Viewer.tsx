@@ -12,6 +12,7 @@ import { loadDtxJsonIntoEngine, reset as resetCanvasEngine } from "../../app/red
 import { LoadConfigOptionType } from "../../app/reducers/optionsReducer";
 import { DTXDrawingConfig } from "../../external/DTX/DTXCanvasTypes";
 import OutputPane from "./OutputPane";
+import ConfigTest from "../../components/ConfigTest";
 
 const Viewer: React.FC = () => {
     const {
@@ -74,11 +75,6 @@ const Viewer: React.FC = () => {
         setSelectedItemNum(selectedItem);
     }, []);
 
-    // const sideBarCallback: Function = (selectedItem: number) => {
-    //   console.log(selectedItem);
-    //   setSelectedItemNum(selectedItem);
-    // };
-
     return (
         <React.Fragment>
             <Box
@@ -101,7 +97,9 @@ const Viewer: React.FC = () => {
                                 </CardContent>
                             </Card>
                             <Card variant="outlined" sx={selectedItemNum === 1 ? { p: 1 } : { display: "none" }}>
-                                Config Panel 2
+                                <CardContent>
+                                    <ConfigTest></ConfigTest>
+                                </CardContent>
                             </Card>
                             <Card variant="outlined" sx={selectedItemNum === 2 ? { p: 1 } : { display: "none" }}>
                                 Config Panel 3
