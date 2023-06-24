@@ -1,13 +1,20 @@
-import { Paper, Typography, Box } from "@mui/material";
+import { Paper, Typography, Box, Tabs, Tab, Card } from "@mui/material";
 import FabricCanvas from "../../components/FabricCanvas/FabricCanvas";
 import { CanvasEngineOverallState } from "../../app/reducers/canvasEngineReducer";
 import { useAppSelector } from "../../app/hooks";
-import { ReactNode, useCallback, useMemo } from "react";
+import { ReactNode, useCallback, useMemo, useState } from "react";
 import { fabric } from "fabric";
 import CanvasDrawing from "../../external/CanvasDrawing/CanvasDrawing";
+import styled from "@emotion/styled";
 
 const OutputPane: React.FC = () => {
     const { Drum, Guitar, Bass, overallStatus }: CanvasEngineOverallState = useAppSelector((state) => state.canvasDTX);
+
+    const [tabValue, setTabValue] = useState<number>(0);
+
+    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+        setTabValue(newValue);
+    };
 
     const drawCanvasFunction = useCallback(
         (canvas: fabric.StaticCanvas, renderCount: number) => {
@@ -25,7 +32,7 @@ const OutputPane: React.FC = () => {
     );
 
     const fabricComponentsForDrum = useMemo(() => {
-        let retComponents: ReactNode = <></>;
+        let retComponents: ReactNode = <Typography variant="h5">Load a DTX File to start</Typography>;
         console.log("in useMemo: status is " + Drum.status);
         if (Drum.status === "loaded") {
             retComponents = Drum.canvasDTXObjects.map((canvasDTXObject, index) => {
@@ -46,19 +53,83 @@ const OutputPane: React.FC = () => {
     }, [Drum]);
 
     return (
-        <Paper sx={{ p: 2 }} className="my-paper">
-            <Typography variant="h4" component="h1" gutterBottom>
-                Main Viewer
-            </Typography>
-            This is the main viewer
-            {/* <ProTip />*/}
-            <Box sx={{ overflow: "auto", maxHeight: "80vh", maxWidth: "75vw" }}>{fabricComponentsForDrum}</Box>
-            {/* <Card variant="outlined">
-      <CardContent sx={{overflow: 'auto', maxHeight: '80vh', maxWidth: '75vw'}}>
-        <Typography variant="h5">Card Top</Typography>
-                
-      </CardContent>
-    </Card> */}
+        <Paper className="my-paper">
+            <Card variant="outlined">
+                <Tabs
+                    value={tabValue}
+                    onChange={handleChange}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    aria-label="scrollable auto tabs example"
+                >
+                    <Tab label="Drum" />
+                    <Tab label="Guitar" />
+                    <Tab label="Bass" />
+                    <Tab label="Overview" />
+                    <Tab label="Phase Builder" />
+                </Tabs>
+            </Card>
+            {/* Manage tab content by simply setting the display sx prop with a none value conditionally to hide it*/}
+            <Paper
+                elevation={3}
+                sx={{
+                    overflow: "auto",
+                    maxHeight: "85vh",
+                    maxWidth: "75vw",
+                    height: "85vh",
+                    display: tabValue !== 0 ? "none" : undefined
+                }}
+            >
+                {fabricComponentsForDrum}
+            </Paper>
+            <Paper
+                elevation={3}
+                sx={{
+                    overflow: "auto",
+                    maxHeight: "85vh",
+                    maxWidth: "75vw",
+                    height: "85vh",
+                    display: tabValue !== 1 ? "none" : undefined
+                }}
+            >
+                <Typography variant="h5">Guitar Chart under construction</Typography>
+            </Paper>
+            <Paper
+                elevation={3}
+                sx={{
+                    overflow: "auto",
+                    maxHeight: "85vh",
+                    maxWidth: "75vw",
+                    height: "85vh",
+                    display: tabValue !== 2 ? "none" : undefined
+                }}
+            >
+                <Typography variant="h5">Bass Chart under construction</Typography>
+            </Paper>
+            <Paper
+                elevation={3}
+                sx={{
+                    overflow: "auto",
+                    maxHeight: "85vh",
+                    maxWidth: "75vw",
+                    height: "85vh",
+                    display: tabValue !== 3 ? "none" : undefined
+                }}
+            >
+                <Typography variant="h5">Overview Information under construction</Typography>
+            </Paper>
+            <Paper
+                elevation={3}
+                sx={{
+                    overflow: "auto",
+                    maxHeight: "85vh",
+                    maxWidth: "75vw",
+                    height: "85vh",
+                    display: tabValue !== 4 ? "none" : undefined
+                }}
+            >
+                <Typography variant="h5">Phase Builder under construction</Typography>
+            </Paper>
         </Paper>
     );
 };

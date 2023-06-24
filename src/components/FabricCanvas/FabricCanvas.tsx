@@ -37,9 +37,7 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasPro
     }, [canvasObject, triggerDraw, drawFunction]);
 
     return (
-        <Paper sx={{ py: 1 }}>
-            <canvas id={id} ref={elementRef}></canvas>
-        </Paper>
+        <canvas id={id} ref={elementRef}></canvas>
     );
 };
 //sx={{overflow: 'auto', maxHeight: 700, maxWidth: '75vw'}}
