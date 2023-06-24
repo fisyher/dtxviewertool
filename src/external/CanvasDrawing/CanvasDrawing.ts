@@ -144,7 +144,7 @@ export default class CanvasDrawing {
                     width: element.rectPos.width,
                     height: element.rectPos.height
                 },
-                { fill: CanvasDrawing.DM_CHIP_COLOR_INFO[element.laneType].color }
+                element.laneType
             );
         }
 
@@ -171,6 +171,46 @@ export default class CanvasDrawing {
         }
     }
 
+    private static addChipImageRect(
+        canvasObject: fabric.StaticCanvas,
+        positionSize: DTXRect,
+        imageElement: HTMLImageElement
+    ) {
+        
+
+        const rect = new fabric.Rect({
+            width: imageElement.naturalWidth,
+            height: imageElement.naturalHeight,
+            left: positionSize.posX,
+            top: positionSize.posY,
+            originY: "center"
+        });
+        rect.set(
+            "fill",
+            new fabric.Pattern({
+                source: imageElement,
+                repeat: "no-repeat"
+            })
+        );
+
+        canvasObject.add(rect);
+    }
+
+    /**
+     * positionSize - An object defined as {x: <number>, y: <number>, width: <number>, height: <number>}
+     * laneType - Lane Type
+     * Remarks: Origin of rect is assumed to be top-left corner by default, unless otherwise
+     */
+    private static addChip(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, laneType: string) {
+        if (CanvasDrawing.CHART_IMAGE_ASSETS[laneType]) {
+            CanvasDrawing.addChipImageRect(canvasObject, positionSize, CanvasDrawing.CHART_IMAGE_ASSETS[laneType]);
+        } else {
+            CanvasDrawing.addChipRect(canvasObject, positionSize, {
+                fill: CanvasDrawing.DM_CHIP_COLOR_INFO[laneType].color
+            });
+        }
+    }
+
     /**
      * positionSize - An object defined as {x: <number>, y: <number>, width: <number>, height: <number>}
      * drawOptions - Drawing options consisting of following options:
@@ -179,7 +219,11 @@ export default class CanvasDrawing {
      *      strokeWidth - The width of stroke in pixels. Default is 0
      * Remarks: Origin of rect is assumed to be top-left corner by default, unless otherwise
      */
-    private static addChip(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, drawOptions: CanvasDrawOptions) {
+    private static addChipRect(
+        canvasObject: fabric.StaticCanvas,
+        positionSize: DTXRect,
+        drawOptions: CanvasDrawOptions
+    ) {
         let rect = null;
         rect = new fabric.Rect({
             fill: drawOptions.fill,
