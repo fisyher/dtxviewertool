@@ -48,6 +48,11 @@ interface DTXChipPixelRectPos {
     //canvasSheetIndex: number;
 }
 
+interface DTXImageRectPos {
+    name: string;
+    rectPos: DTXRect;
+}
+
 interface DTXTextRectPos {
     color: string;
     rectPos: DTXRect;
@@ -61,6 +66,7 @@ interface DTXCanvasDataType {
     chipPositions: DTXChipPixelRectPos[];
     textPositions: DTXTextRectPos[];
     frameRect: DTXRect[];
+    images: DTXImageRectPos[];
     canvasSize: { width: number; height: number };
 }
 
@@ -81,6 +87,7 @@ export type {
     DTXDrawingConfig,
     DTXCanvasDataType,
     DTXTextRectPos,
-    GameModeType
+    DTXImageRectPos,
+    GameModeType    
 };
 export { ChartModes, DifficultyLabels };

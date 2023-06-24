@@ -1,5 +1,5 @@
 import { fabric } from "fabric";
-import { DTXChipPixelRectPos, DTXCanvasDataType, DTXRect, DTXTextRectPos } from "../DTX/DTXCanvasTypes";
+import { DTXChipPixelRectPos, DTXCanvasDataType, DTXRect, DTXTextRectPos, DTXImageRectPos } from "../DTX/DTXCanvasTypes";
 
 type CanvasDrawOptions = {
     fill?: string | fabric.Pattern | fabric.Gradient | undefined;
@@ -148,6 +148,12 @@ export default class CanvasDrawing {
             );
         }
 
+        //Draw GameMode/Difficulty Image banner
+        for (let index = 0; index < canvasData.images.length; index++) {
+            const element: DTXImageRectPos = canvasData.images[index];
+            this.addImageRect(canvasObject, element.rectPos, element.name);
+        }
+
         //Finally draw all text objects
         for (let index = 0; index < canvasData.textPositions.length; index++) {
             const element: DTXTextRectPos = canvasData.textPositions[index];
@@ -169,6 +175,33 @@ export default class CanvasDrawing {
                 }
             );
         }
+    }
+
+    private static addImageRect(canvasObject: fabric.StaticCanvas,
+        positionSize: DTXRect,
+        imageName: string){
+
+            if(CanvasDrawing.CHART_IMAGE_ASSETS[imageName]){
+
+                const imageElement: HTMLImageElement = CanvasDrawing.CHART_IMAGE_ASSETS[imageName];
+
+                const rect = new fabric.Rect({
+                    width: imageElement.naturalWidth,
+                    height: imageElement.naturalHeight,
+                    left: positionSize.posX,
+                    top: positionSize.posY
+                });
+                rect.set(
+                    "fill",
+                    new fabric.Pattern({
+                        source: imageElement,
+                        repeat: "no-repeat"
+                    })
+                );
+
+                canvasObject.add(rect);
+            }
+
     }
 
     private static addChipImageRect(

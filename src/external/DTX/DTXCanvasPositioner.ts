@@ -6,7 +6,9 @@ import {
     DTXCanvasDataType,
     DTXTextRectPos,
     GameModeType,
-    ChartModeType
+    ChartModeType,
+    DifficultyLabelType,
+    DTXImageRectPos
 } from "./DTXCanvasTypes";
 import { convertNumberToFormattedText, convertSecondsToMMssFormat } from "../utility/basicStringFormatter";
 
@@ -122,6 +124,7 @@ export class DtxCanvasPositioner {
                 chipPositions: [],
                 textPositions: [],
                 frameRect: [],
+                images: [],
                 canvasSize: {
                     width: widthPerCanvas[index],
                     height: this.canvasHeightGivenBodySectionHeight(bodySectionHeightPerCanvas[index])
@@ -150,7 +153,7 @@ export class DtxCanvasPositioner {
         this.computeChipPositionInCanvas(dtxJson);
 
         //
-        this.createTextInfoForDrawing(dtxJson, drawingOptions.gameMode, drawingOptions.chartMode);
+        this.createTextInfoForDrawing(dtxJson, drawingOptions.gameMode, drawingOptions.chartMode, drawingOptions.difficultyLabel);
     }
 
     public getCanvasDataForDrawing(): DTXCanvasDataType[] {
@@ -189,7 +192,7 @@ export class DtxCanvasPositioner {
         return level.toFixed(2);
     }
 
-    private createTextInfoForDrawing(dtxJson: DTXJson, gameMode: GameModeType, chartMode: ChartModeType): void {
+    private createTextInfoForDrawing(dtxJson: DTXJson, gameMode: GameModeType, chartMode: ChartModeType, difficultyLabel: DifficultyLabelType): void {
         let localTextPostArray: DTXTextRectPos[] = [];
 
         //Title
@@ -220,6 +223,17 @@ export class DtxCanvasPositioner {
             fontSize: 16,
             color: "#ffffff",
             text: dtxJson.songInfo.artist
+        };
+
+        //Difficulty Type Image Label
+        const diffTypeImage : DTXImageRectPos = {
+            rectPos:{
+                posX: 30 + 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                posY: 5,
+                width: 140,
+                height: 50
+            },
+            name: `${gameMode}${difficultyLabel}BannerSmall`
         };
 
         //Difficulty Level
@@ -278,6 +292,7 @@ export class DtxCanvasPositioner {
                 height: this.HEADER_SECTION_HEIGHT
             };
             canvasData.frameRect.push(backgroundRect);
+            canvasData.images.push(diffTypeImage);
         });
     }
 

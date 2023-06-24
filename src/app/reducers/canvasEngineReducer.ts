@@ -6,10 +6,6 @@ import type { GameModeType } from "../../external/DTX/DTXCanvasTypes";
 
 type CanvasEngineStatusType = "empty" | "loading" | "loaded" | "rendering" | "done" | "error";
 
-interface NamedImageObject {
-    [key: string]: HTMLImageElement;
-}
-
 interface CanvasChartState {
     canvasDTXObjects: DTXCanvasDataType[];    
     gameMode: GameModeType;
