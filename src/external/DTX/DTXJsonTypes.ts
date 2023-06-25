@@ -39,6 +39,8 @@
  *
  */
 
+type DTXFileType = "dtx" | "gda";
+
 interface DTXSongInfoType {
     title: string;
     artist: string;
@@ -118,6 +120,6 @@ const EmptyDTXJson: DTXJson = {
     laneChipCounter: {}
 };
 
-export type { DTXBar, DTXBpmSegment, DTXChip, DTXLine, DTXSongInfoType, DTXMetaDataType };
+export type { DTXBar, DTXBpmSegment, DTXChip, DTXLine, DTXSongInfoType, DTXMetaDataType, DTXFileType };
 export { EmptyDTXJson };
 export default DTXJson;

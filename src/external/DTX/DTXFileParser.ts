@@ -1,4 +1,4 @@
-import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson, DTXLine } from "./DTXJsonTypes";
+import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson, DTXLine, DTXFileType } from "./DTXJsonTypes";
 import DTXJson from "./DTXJsonTypes";
 
 //Intermediate interfaces
@@ -52,7 +52,26 @@ const LINES_IN_1_BAR: number = 192;
  * RideCymbal
  */
 const LANE_CODES_ARRAY: LaneCodeRemap[] = [
+    //Common
     { code: ["01"], name: "BGM" },
+    //Drum
+    { code: ["1A"], name: "LeftCrashCymbal" },
+    { code: ["11", "18"], name: "Hi-Hat" },
+    { code: ["12"], name: "Snare" },
+    { code: ["1B", "1C"], name: "LeftBassPedal" },
+    { code: ["14"], name: "Hi-Tom" },
+    { code: ["13"], name: "RightBassPedal" },
+    { code: ["15"], name: "Low-Tom" },
+    { code: ["17"], name: "Floor-Tom" },
+    { code: ["16"], name: "RightCrashCymbal" },
+    { code: ["19"], name: "RideCymbal" }
+    //Guitar
+];
+
+const CommonLaneCodeMapping: LaneCodeRemap[] = [{ code: ["01"], name: "BGM" }];
+
+//DTX Mappings
+const DTXLaneCodeMappingForDrum: LaneCodeRemap[] = [
     { code: ["1A"], name: "LeftCrashCymbal" },
     { code: ["11", "18"], name: "Hi-Hat" },
     { code: ["12"], name: "Snare" },
@@ -65,6 +84,122 @@ const LANE_CODES_ARRAY: LaneCodeRemap[] = [
     { code: ["19"], name: "RideCymbal" }
 ];
 
+const DTXLaneCodeMappingForGuitar: LaneCodeRemap[] = [
+    { code: ["20"], name: "G00000" },
+    { code: ["21"], name: "G00100" },
+    { code: ["22"], name: "G01000" },
+    { code: ["24"], name: "G10000" },
+    { code: ["93"], name: "G00010" },
+    { code: ["9B"], name: "G00001" },
+    { code: ["23"], name: "G01100" },
+    { code: ["25"], name: "G10100" },
+    { code: ["26"], name: "G11000" },
+    { code: ["94"], name: "G00110" },
+    { code: ["95"], name: "G01010" },
+    { code: ["97"], name: "G10010" },
+    { code: ["9C"], name: "G00101" },
+    { code: ["9D"], name: "G01001" },
+    { code: ["9F"], name: "G10001" },
+    { code: ["AC"], name: "G00011" },
+    { code: ["27"], name: "G11100" },
+    { code: ["96"], name: "G01110" },
+    { code: ["98"], name: "G10110" },
+    { code: ["99"], name: "G11010" },
+    { code: ["9E"], name: "G01101" },
+    { code: ["A9"], name: "G10101" },
+    { code: ["AA"], name: "G11001" },
+    { code: ["AD"], name: "G00111" },
+    { code: ["AE"], name: "G01011" },
+    { code: ["D0"], name: "G10011" },
+    { code: ["9A"], name: "G11110" },
+    { code: ["AB"], name: "G11101" },
+    { code: ["AF"], name: "G01111" },
+    { code: ["D1"], name: "G10111" },
+    { code: ["D2"], name: "G11011" },
+    { code: ["D3"], name: "G11111" },
+    { code: ["28"], name: "GWail" },
+    { code: ["2C"], name: "GHold" }
+];
+
+const DTXLaneCodeMappingForBass: LaneCodeRemap[] = [
+    { code: ["A0"], name: "B00000" },
+    { code: ["A1"], name: "B00100" },
+    { code: ["A2"], name: "B01000" },
+    { code: ["A4"], name: "B10000" },
+    { code: ["C5"], name: "B00010" },
+    { code: ["CE"], name: "B00001" },
+    { code: ["A3"], name: "B01100" },
+    { code: ["A5"], name: "B10100" },
+    { code: ["A6"], name: "B11000" },
+    { code: ["C6"], name: "B00110" },
+    { code: ["C8"], name: "B01010" },
+    { code: ["CA"], name: "B10010" },
+    { code: ["CF"], name: "B00101" },
+    { code: ["DA"], name: "B01001" },
+    { code: ["DC"], name: "B10001" },
+    { code: ["E1"], name: "B00011" },
+    { code: ["A7"], name: "B11100" },
+    { code: ["C9"], name: "B01110" },
+    { code: ["CB"], name: "B10110" },
+    { code: ["CC"], name: "B11010" },
+    { code: ["DB"], name: "B01101" },
+    { code: ["DD"], name: "B10101" },
+    { code: ["DE"], name: "B11001" },
+    { code: ["E2"], name: "B00111" },
+    { code: ["E3"], name: "B01011" },
+    { code: ["E5"], name: "B10011" },
+    { code: ["CD"], name: "B11110" },
+    { code: ["DF"], name: "B11101" },
+    { code: ["E4"], name: "B01111" },
+    { code: ["E6"], name: "B10111" },
+    { code: ["E7"], name: "B11011" },
+    { code: ["E8"], name: "B11111" },
+    { code: ["A8"], name: "BWail" },
+    { code: ["2D"], name: "BHold" }
+];
+
+//GDA Mappings
+const GDALaneCodeMappingForDrum: LaneCodeRemap[] = [
+    { code: ["HH"], name: "Hi-Hat" },
+    { code: ["SD"], name: "Snare" },
+    { code: ["HT"], name: "Hi-Tom" },
+    { code: ["BD"], name: "RightBassPedal" },
+    { code: ["LT"], name: "Low-Tom" },
+    { code: ["FT"], name: "Floor-Tom" },
+    { code: ["CY"], name: "RightCrashCymbal" }
+];
+
+const GDALaneCodeMappingForGuitar: LaneCodeRemap[] = [
+    { code: ["G0"], name: "G000" },
+    { code: ["G1"], name: "G001" },
+    { code: ["G2"], name: "G010" },
+    { code: ["G3"], name: "G011" },
+    { code: ["G4"], name: "G100" },
+    { code: ["G5"], name: "G101" },
+    { code: ["G6"], name: "G110" },
+    { code: ["G7"], name: "G111" },
+    { code: ["GW"], name: "GWail" }
+];
+
+const GDALaneCodeMappingForBass: LaneCodeRemap[] = [
+    { code: ["B0"], name: "B000" },
+    { code: ["B1"], name: "B001" },
+    { code: ["B2"], name: "B010" },
+    { code: ["B3"], name: "B011" },
+    { code: ["B4"], name: "B100" },
+    { code: ["B5"], name: "B101" },
+    { code: ["B6"], name: "B110" },
+    { code: ["B7"], name: "B111" },
+    { code: ["BW"], name: "BWail" }
+];
+
+const SUPPORTED_HEADERS = [
+    "; Created by DTXCreator 024",
+    "; Created by DTXCreator 025(verK)",
+    "; Created by DTXCreator 020",
+    "; Created by DTXCreatorAL 008"
+];
+
 export class DtxFileParser {
     private path: string = "";
     private barLengths: number[] = [];
@@ -75,10 +210,23 @@ export class DtxFileParser {
         songInfo: { ...EmptyDTXJson.songInfo },
         laneChipCounter: { ...EmptyDTXJson.laneChipCounter }
     };
+    private fileType: DTXFileType = "dtx";
     private errorMessage: string = "";
-    //private dtxcontent: string = "";
-    //private dtxContentLines: Array<string> = [];
-    //private dtxobject: object;
+
+    /**
+     * laneCodeMapping is the combined mapping of selected pre-defined mapping based on file type (DTX or GDA) 
+ *  laneCodeMapping: LaneCodeRemap[] = [
+    //Common
+    { code: ["01"], name: "BGM" },
+    //Drum
+    ...
+    //Guitar
+    ...
+    //Bass
+    ...
+];
+ */
+    private laneCodeMapping: LaneCodeRemap[] = [];
 
     /**
      * Opens a DTX file and converts to internal JSON format
@@ -94,6 +242,9 @@ export class DtxFileParser {
             console.error(this.errorMessage);
             return;
         }
+
+        //
+        this.setLaneCodeMapping(this.fileType);
 
         //Main Data
 
@@ -142,7 +293,9 @@ export class DtxFileParser {
             this.laneBarChipsArray = this.extractAndCreateLaneChipsArray(content);
 
             //Note Count
-            this.finalJson.songInfo.noteCountDrum = this.computeNoteCountDrum();
+            this.finalJson.songInfo.noteCountDrum = this.computeNoteCountDrum(this.fileType);
+            this.finalJson.songInfo.noteCountGuitar = this.computeNoteCountGuitar(this.fileType);
+            this.finalJson.songInfo.noteCountBass = this.computeNoteCountBass(this.fileType);
 
             this.finalJson.chips = this.flattenAllChipsIntoASingleArray(this.laneBarChipsArray);
         } catch (error) {
@@ -163,6 +316,21 @@ export class DtxFileParser {
         return this.errorMessage;
     }
 
+    private setLaneCodeMapping(fileType: DTXFileType) {
+        if (fileType === "dtx") {
+            this.laneCodeMapping = this.laneCodeMapping.concat(CommonLaneCodeMapping);
+            this.laneCodeMapping = this.laneCodeMapping.concat(DTXLaneCodeMappingForDrum);
+            this.laneCodeMapping = this.laneCodeMapping.concat(DTXLaneCodeMappingForGuitar);
+            this.laneCodeMapping = this.laneCodeMapping.concat(DTXLaneCodeMappingForBass);
+        } else {
+            //gda
+            this.laneCodeMapping = this.laneCodeMapping.concat(CommonLaneCodeMapping);
+            this.laneCodeMapping = this.laneCodeMapping.concat(GDALaneCodeMappingForDrum);
+            this.laneCodeMapping = this.laneCodeMapping.concat(GDALaneCodeMappingForGuitar);
+            this.laneCodeMapping = this.laneCodeMapping.concat(GDALaneCodeMappingForBass);
+        }
+    }
+
     // public saveAsJsonFile(outpath: string){
     //     try {
     //         fs.writeFileSync(outpath, JSON.stringify(this.finalJson))
@@ -171,7 +339,7 @@ export class DtxFileParser {
     //     }
     // }
 
-    private computeNoteCountDrum(): number {
+    private computeNoteCountDrum(fileType: DTXFileType): number {
         /**
          * LeftCrashCymbal
          * Hi-Hat
@@ -185,19 +353,49 @@ export class DtxFileParser {
          * RideCymbal
          */
         const countArray: number[] = [
-            this.finalJson.laneChipCounter["LeftCrashCymbal"],
-            this.finalJson.laneChipCounter["Hi-Hat"],
-            this.finalJson.laneChipCounter["Snare"],
-            this.finalJson.laneChipCounter["LeftBassPedal"],
-            this.finalJson.laneChipCounter["Hi-Tom"],
-            this.finalJson.laneChipCounter["RightBassPedal"],
-            this.finalJson.laneChipCounter["Low-Tom"],
-            this.finalJson.laneChipCounter["Floor-Tom"],
-            this.finalJson.laneChipCounter["RightCrashCymbal"],
-            this.finalJson.laneChipCounter["RideCymbal"]
+            this.finalJson.laneChipCounter["LeftCrashCymbal"] || 0,
+            this.finalJson.laneChipCounter["Hi-Hat"] || 0,
+            this.finalJson.laneChipCounter["Snare"] || 0,
+            this.finalJson.laneChipCounter["LeftBassPedal"] || 0,
+            this.finalJson.laneChipCounter["Hi-Tom"] || 0,
+            this.finalJson.laneChipCounter["RightBassPedal"] || 0,
+            this.finalJson.laneChipCounter["Low-Tom"] || 0,
+            this.finalJson.laneChipCounter["Floor-Tom"] || 0,
+            this.finalJson.laneChipCounter["RightCrashCymbal"] || 0,
+            this.finalJson.laneChipCounter["RideCymbal"] || 0
         ];
 
         return countArray.reduce((partialSum, current) => partialSum + current, 0);
+    }
+
+    private computeNoteCountGuitar(fileType: DTXFileType): number {
+        const guitarLaneCodeMapping: LaneCodeRemap[] =
+            fileType === "dtx" ? DTXLaneCodeMappingForGuitar : GDALaneCodeMappingForGuitar;
+
+        let count: number = 0;
+        guitarLaneCodeMapping.forEach((element) => {
+            //All chips except Wail and Hold are valid for counting notes
+            if (element.name !== "GWail" && element.name !== "GHold") {
+                count += this.finalJson.laneChipCounter[element.name] || 0;
+            }
+        });
+
+        return count;
+    }
+
+    private computeNoteCountBass(fileType: DTXFileType): number {
+        const bassLaneCodeMapping: LaneCodeRemap[] =
+            fileType === "dtx" ? DTXLaneCodeMappingForBass : GDALaneCodeMappingForBass;
+
+        let count: number = 0;
+        bassLaneCodeMapping.forEach((element) => {
+            //All chips except Wail and Hold are valid for counting notes
+            if (element.name !== "BWail" && element.name !== "BHold") {
+                count += this.finalJson.laneChipCounter[element.name] || 0;
+            }
+        });
+
+        return count;
     }
 
     private accumulateCountForLaneChips(laneName: string, count: number) {
@@ -227,16 +425,16 @@ export class DtxFileParser {
              * RightCrashCymbal
              * RideCymbal
              */
-            for (let j = 0; j < LANE_CODES_ARRAY.length; j++) {
-                currBarChips[LANE_CODES_ARRAY[j].name] = this.extractChipsFromLanesInBar(
+            for (let j = 0; j < this.laneCodeMapping.length; j++) {
+                currBarChips[this.laneCodeMapping[j].name] = this.extractChipsFromLanesInBar(
                     dtxContent,
                     index,
-                    LANE_CODES_ARRAY[j].code,
-                    LANE_CODES_ARRAY[j].name
+                    this.laneCodeMapping[j].code,
+                    this.laneCodeMapping[j].name
                 );
                 this.accumulateCountForLaneChips(
-                    LANE_CODES_ARRAY[j].name,
-                    currBarChips[LANE_CODES_ARRAY[j].name].length
+                    this.laneCodeMapping[j].name,
+                    currBarChips[this.laneCodeMapping[j].name].length
                 );
             }
 
