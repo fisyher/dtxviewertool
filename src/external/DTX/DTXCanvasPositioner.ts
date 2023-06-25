@@ -407,18 +407,22 @@ export class DtxCanvasPositioner {
                 chip.lineTimePosition.timePosition
             );
 
-            //
-            const chipPixelPos: DTXChipPixelRectPos = {
-                laneType: chip.laneType,
-                rectPos: {
-                    posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO[chip.laneType].posX,
-                    posY: chipLinePosInCanvas.posY,
-                    width: this.DM_CHIP_POS_SIZE_INFO[chip.laneType].width,
-                    height: this.DM_CHIP_POS_SIZE_INFO[chip.laneType].height
-                }
-            };
-
-            this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+            //Not all chips are defined with Pos Size yet, so we check for undefined here
+            const chipPosSizeInfo : {posX: number; width: number; height: number} | undefined = this.DM_CHIP_POS_SIZE_INFO[chip.laneType];
+            if(chipPosSizeInfo){
+                const chipPixelPos: DTXChipPixelRectPos = {
+                    laneType: chip.laneType,
+                    rectPos: {
+                        posX: chipLinePosInCanvas.posX + chipPosSizeInfo.posX,
+                        posY: chipLinePosInCanvas.posY,
+                        width: chipPosSizeInfo.width,
+                        height: chipPosSizeInfo.height
+                    }
+                };
+    
+                this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+            }
+            
         }
 
         //EndLine
