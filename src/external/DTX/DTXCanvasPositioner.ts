@@ -11,6 +11,7 @@ import {
     DTXImageRectPos
 } from "./DTXCanvasTypes";
 import { convertNumberToFormattedText, convertSecondsToMMssFormat } from "../utility/basicStringFormatter";
+import DTXCanvasDrawConfigHelper, { DTXChipDrawingLane } from "./DTXCanvasDrawConfigHelper";
 
 interface DTXInterimBarPosType {
     absoluteTime: number;
@@ -150,10 +151,15 @@ export class DtxCanvasPositioner {
         }
 
         //Compute pixel positions for chips to be drawn and store into canvasDTXObjects
-        this.computeChipPositionInCanvas(dtxJson);
+        this.computeChipPositionInCanvas(dtxJson, drawingOptions.gameMode, drawingOptions.chartMode);
 
         //
-        this.createTextInfoForDrawing(dtxJson, drawingOptions.gameMode, drawingOptions.chartMode, drawingOptions.difficultyLabel);
+        this.createTextInfoForDrawing(
+            dtxJson,
+            drawingOptions.gameMode,
+            drawingOptions.chartMode,
+            drawingOptions.difficultyLabel
+        );
     }
 
     public getCanvasDataForDrawing(): DTXCanvasDataType[] {
@@ -192,7 +198,12 @@ export class DtxCanvasPositioner {
         return level.toFixed(2);
     }
 
-    private createTextInfoForDrawing(dtxJson: DTXJson, gameMode: GameModeType, chartMode: ChartModeType, difficultyLabel: DifficultyLabelType): void {
+    private createTextInfoForDrawing(
+        dtxJson: DTXJson,
+        gameMode: GameModeType,
+        chartMode: ChartModeType,
+        difficultyLabel: DifficultyLabelType
+    ): void {
         let localTextPostArray: DTXTextRectPos[] = [];
 
         //Title
@@ -226,8 +237,8 @@ export class DtxCanvasPositioner {
         };
 
         //Difficulty Type Image Label
-        const diffTypeImage : DTXImageRectPos = {
-            rectPos:{
+        const diffTypeImage: DTXImageRectPos = {
+            rectPos: {
                 posX: 30 + 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
                 posY: 5,
                 width: 140,
@@ -296,7 +307,7 @@ export class DtxCanvasPositioner {
         });
     }
 
-    private computeChipPositionInCanvas(dtxJson: DTXJson): void {
+    private computeChipPositionInCanvas(dtxJson: DTXJson, gameMode: GameModeType, chartMode: ChartModeType): void {
         //let retResult: DTXChipPixelPos[] = [];
 
         //Compute for bar lines
@@ -407,22 +418,28 @@ export class DtxCanvasPositioner {
                 chip.lineTimePosition.timePosition
             );
 
-            //Not all chips are defined with Pos Size yet, so we check for undefined here
-            const chipPosSizeInfo : {posX: number; width: number; height: number} | undefined = this.DM_CHIP_POS_SIZE_INFO[chip.laneType];
-            if(chipPosSizeInfo){
-                const chipPixelPos: DTXChipPixelRectPos = {
-                    laneType: chip.laneType,
-                    rectPos: {
-                        posX: chipLinePosInCanvas.posX + chipPosSizeInfo.posX,
-                        posY: chipLinePosInCanvas.posY,
-                        width: chipPosSizeInfo.width,
-                        height: chipPosSizeInfo.height
-                    }
-                };
-    
-                this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+            //Iterate through the return array of chipPosSize to add multiple drawing chips
+            const chipPosSizeArray: DTXChipDrawingLane[] =
+                DTXCanvasDrawConfigHelper.getRelativeSizePosOfChipsForLaneCode(chip.laneType, gameMode, chartMode);
+            for (let j = 0; j < chipPosSizeArray.length; j++) {
+                const chipPosSizeInfo: DTXChipDrawingLane = chipPosSizeArray[j];
+
+                if (chipPosSizeInfo.chipRelativePosSize) {
+                    const chipPixelPos: DTXChipPixelRectPos = {
+                        laneType: chipPosSizeInfo.drawingLane,
+                        rectPos: {
+                            posX: chipLinePosInCanvas.posX + chipPosSizeInfo.chipRelativePosSize.posX,
+                            posY: chipLinePosInCanvas.posY,
+                            width: chipPosSizeInfo.chipRelativePosSize.width,
+                            height: chipPosSizeInfo.chipRelativePosSize.height
+                        }
+                    };
+
+                    this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+                } else {
+                    console.log("Lane " + chip.laneType + " has no chipRelativePosSize info!!");
+                }
             }
-            
         }
 
         //EndLine

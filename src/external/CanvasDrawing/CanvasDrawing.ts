@@ -1,5 +1,11 @@
 import { fabric } from "fabric";
-import { DTXChipPixelRectPos, DTXCanvasDataType, DTXRect, DTXTextRectPos, DTXImageRectPos } from "../DTX/DTXCanvasTypes";
+import {
+    DTXChipPixelRectPos,
+    DTXCanvasDataType,
+    DTXRect,
+    DTXTextRectPos,
+    DTXImageRectPos
+} from "../DTX/DTXCanvasTypes";
 
 type CanvasDrawOptions = {
     fill?: string | fabric.Pattern | fabric.Gradient | undefined;
@@ -177,31 +183,26 @@ export default class CanvasDrawing {
         }
     }
 
-    private static addImageRect(canvasObject: fabric.StaticCanvas,
-        positionSize: DTXRect,
-        imageName: string){
+    private static addImageRect(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, imageName: string) {
+        if (CanvasDrawing.CHART_IMAGE_ASSETS[imageName]) {
+            const imageElement: HTMLImageElement = CanvasDrawing.CHART_IMAGE_ASSETS[imageName];
 
-            if(CanvasDrawing.CHART_IMAGE_ASSETS[imageName]){
+            const rect = new fabric.Rect({
+                width: imageElement.naturalWidth,
+                height: imageElement.naturalHeight,
+                left: positionSize.posX,
+                top: positionSize.posY
+            });
+            rect.set(
+                "fill",
+                new fabric.Pattern({
+                    source: imageElement,
+                    repeat: "no-repeat"
+                })
+            );
 
-                const imageElement: HTMLImageElement = CanvasDrawing.CHART_IMAGE_ASSETS[imageName];
-
-                const rect = new fabric.Rect({
-                    width: imageElement.naturalWidth,
-                    height: imageElement.naturalHeight,
-                    left: positionSize.posX,
-                    top: positionSize.posY
-                });
-                rect.set(
-                    "fill",
-                    new fabric.Pattern({
-                        source: imageElement,
-                        repeat: "no-repeat"
-                    })
-                );
-
-                canvasObject.add(rect);
-            }
-
+            canvasObject.add(rect);
+        }
     }
 
     private static addChipImageRect(
@@ -209,8 +210,6 @@ export default class CanvasDrawing {
         positionSize: DTXRect,
         imageElement: HTMLImageElement
     ) {
-        
-
         const rect = new fabric.Rect({
             width: imageElement.naturalWidth,
             height: imageElement.naturalHeight,
