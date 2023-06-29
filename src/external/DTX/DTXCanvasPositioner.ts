@@ -30,10 +30,6 @@ export class DtxCanvasPositioner {
     readonly MIN_SCALE = 0.5;
     readonly MAX_SCALE = 3.0;
 
-    // readonly DEFAULT_PAGE_HEIGHT = 720;
-    // readonly MIN_PAGE_HEIGHT = 480;
-    // readonly MAX_PAGE_HEIGHT = 3840;
-
     readonly DEFAULT_PAGEPERCANVAS = 20;
     readonly MIN_PAGEPERCANVAS = 6;
     readonly MAX_PAGEPERCANVAS = 50;
@@ -48,53 +44,16 @@ export class DtxCanvasPositioner {
         right: 0
     };
     //Does not include left+right margins
-    readonly BODY_FRAME_WIDTH = 300;
+    readonly SONG_INFO_TITLE_WIDTH = 750;
+    readonly SONG_INFO_DIFFICULTY_IMAGE_WIDTH = 140;
 
     //Base PIXELS_PER_SECOND is 192 px at scale 1.0
-    //This is equivalent of a drawing a full 4/4 bar at 240 BPM with 192 pixels
+    //This is equivalent of drawing a full 4/4 bar at 240 BPM with height of 192 pixels
     readonly BASE_BPM = 240;
     readonly BASE_PIXELS_PER_SECOND = 192 * (this.BASE_BPM / 240);
 
     //
     readonly DEFAULT_DRAW_DIRECTION_DOWN_TO_UP: boolean = true;
-
-    /**
-     * Bar
-     * LeftCrashCymbal
-     * Hi-Hat
-     * Snare
-     * LeftBassPedal
-     * Hi-Tom
-     * RightBassPedal
-     * Low-Tom
-     * Floor-Tom
-     * RightCrashCymbal
-     * RideCymbal
-     * BPM Segment
-     */
-    //Width and Height of chips are standard
-    readonly DEFAULT_CHIP_HEIGHT = 5;
-    readonly DEFAULT_CHIP_WIDTH = 18;
-    readonly DEFAULT_LANE_BORDER = 1;
-
-    //Put in a map and reference this map instead in case need to change
-    readonly DM_CHIP_POS_SIZE_INFO: { [key: string]: { posX: number; width: number; height: number } } = {
-        "Bar": { posX: 60, width: 200, height: 2 },
-        "QuarterBar": { posX: 60, width: 200, height: 1 },
-        "BGM": { posX: 60, width: 200, height: 2 },
-        "EndLine": { posX: 60, width: 200, height: 2 },
-        "LeftCrashCymbal": { posX: 60, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
-        "Hi-Hat": { posX: 84, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-        "LeftBassPedal": { posX: 102, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-        "Snare": { posX: 120, width: this.DEFAULT_CHIP_WIDTH + 3, height: this.DEFAULT_CHIP_HEIGHT },
-        "Hi-Tom": { posX: 141, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-        "RightBassPedal": { posX: 159, width: this.DEFAULT_CHIP_WIDTH + 5, height: this.DEFAULT_CHIP_HEIGHT },
-        "Low-Tom": { posX: 182, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-        "Floor-Tom": { posX: 200, width: this.DEFAULT_CHIP_WIDTH, height: this.DEFAULT_CHIP_HEIGHT },
-        "RightCrashCymbal": { posX: 218, width: this.DEFAULT_CHIP_WIDTH + 6, height: this.DEFAULT_CHIP_HEIGHT },
-        "RideCymbal": { posX: 242, width: this.DEFAULT_CHIP_WIDTH + 1, height: this.DEFAULT_CHIP_HEIGHT },
-        "BPMMarker": { posX: 50, width: 10, height: 2 }
-    };
 
     private barIndexToFrameSheetMapping: DTXInterimBarPosType[];
     private actualPixelsPerSecond: number;
@@ -107,22 +66,30 @@ export class DtxCanvasPositioner {
      * Constructor takes in DTXJson object and a Drawing configuration selected by UI
      */
     constructor(dtxJson: DTXJson, drawingOptions: DTXDrawingConfig) {
-        const maxBodySectionRect = this.availableBodySectionRect(drawingOptions.maxHeight);
+        const maxBodySectionRect = this.availableBodySectionRect(
+            drawingOptions.maxHeight,
+            drawingOptions.gameMode,
+            drawingOptions.chartMode
+        );
 
         this.actualPixelsPerSecond = drawingOptions.scale * this.BASE_PIXELS_PER_SECOND;
 
         //Decide draw direction based on game mode
-        if(drawingOptions.gameMode === "Drum"){
+        if (drawingOptions.gameMode === "Drum") {
             this.isDrawFromDownToUp = true;
-        }
-        else{
+        } else {
             this.isDrawFromDownToUp = false;
         }
-        
+
         //Compute the interim mapping of Bar to Frame/Sheet index, number of canvas, body section height and canvas-width
         //Ensure entire bars would be drawn within the same frame
         const { barFrameSheetMapping, numOfCanvas, bodySectionHeightPerCanvas, widthPerCanvas, partialFrameRect } =
-            this.computeBarIndexToFrameSheetMapping(dtxJson, maxBodySectionRect.height);
+            this.computeBarIndexToFrameSheetMapping(
+                dtxJson,
+                maxBodySectionRect.height,
+                drawingOptions.gameMode,
+                drawingOptions.chartMode
+            );
         this.barIndexToFrameSheetMapping = barFrameSheetMapping;
         this.bodySectionHeightPerCanvas = bodySectionHeightPerCanvas;
 
@@ -148,18 +115,18 @@ export class DtxCanvasPositioner {
                 bodySectionHeightPerCanvas[frameRect.canvasSheetIndex]
             );
 
-            if(this.isDrawFromDownToUp){
+            if (this.isDrawFromDownToUp) {
                 frameRect.rectPos.posY =
-                currCanvasHeight -
-                (this.FOOTER_SECTION_HEIGHT +
-                    this.SECTION_SPLIT_MARGIN +
-                    this.BODY_FRAME_MARGINS.bottom +
-                    frameRect.rectPos.height);
+                    currCanvasHeight -
+                    (this.FOOTER_SECTION_HEIGHT +
+                        this.SECTION_SPLIT_MARGIN +
+                        this.BODY_FRAME_MARGINS.bottom +
+                        frameRect.rectPos.height);
+            } else {
+                frameRect.rectPos.posY =
+                    this.HEADER_SECTION_HEIGHT + this.SECTION_SPLIT_MARGIN + this.BODY_FRAME_MARGINS.top;
             }
-            else{
-                frameRect.rectPos.posY = this.HEADER_SECTION_HEIGHT + this.SECTION_SPLIT_MARGIN + this.BODY_FRAME_MARGINS.top;
-            }
-            
+
             //Also push the frameRect info into canvasDTXObjects
             this.canvasDTXObjects[frameRect.canvasSheetIndex].frameRect.push({ ...frameRect.rectPos });
         }
@@ -223,9 +190,9 @@ export class DtxCanvasPositioner {
         //Title
         const titlePos: DTXTextRectPos = {
             rectPos: {
-                posX: this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posX: DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
                 posY: 20,
-                width: 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                width: this.SONG_INFO_TITLE_WIDTH,
                 height: 30
             },
             fontFamily: "Arial",
@@ -238,9 +205,9 @@ export class DtxCanvasPositioner {
         //Artist
         const artistPos: DTXTextRectPos = {
             rectPos: {
-                posX: this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                posX: DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
                 posY: 50,
-                width: 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                width: this.SONG_INFO_TITLE_WIDTH,
                 height: 20
             },
             fontFamily: "Arial",
@@ -253,9 +220,11 @@ export class DtxCanvasPositioner {
         //Difficulty Type Image Label
         const diffTypeImage: DTXImageRectPos = {
             rectPos: {
-                posX: 30 + 2.5 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                posX:
+                    DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode) +
+                    this.SONG_INFO_TITLE_WIDTH,
                 posY: 5,
-                width: 140,
+                width: this.SONG_INFO_DIFFICULTY_IMAGE_WIDTH,
                 height: 50
             },
             name: `${gameMode}${difficultyLabel}BannerSmall`
@@ -272,8 +241,9 @@ export class DtxCanvasPositioner {
         const difficultyLevelPos: DTXTextRectPos = {
             rectPos: {
                 posX:
-                    3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) +
-                    this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                    DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode) +
+                    this.SONG_INFO_TITLE_WIDTH +
+                    this.SONG_INFO_DIFFICULTY_IMAGE_WIDTH,
                 posY: 20,
                 width: 400,
                 height: 30
@@ -288,8 +258,9 @@ export class DtxCanvasPositioner {
         const otherSongInfoPos: DTXTextRectPos = {
             rectPos: {
                 posX:
-                    3 * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right) +
-                    this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                    DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode) +
+                    this.SONG_INFO_TITLE_WIDTH +
+                    this.SONG_INFO_DIFFICULTY_IMAGE_WIDTH,
                 posY: 50,
                 width: 400,
                 height: 25
@@ -327,16 +298,23 @@ export class DtxCanvasPositioner {
         //Compute for bar lines
         for (let index = 0; index < dtxJson.bars.length; index++) {
             const barInfo: DTXBar = dtxJson.bars[index];
-            const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(index, barInfo.startTimePos);
+            const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
+                index,
+                barInfo.startTimePos,
+                gameMode,
+                chartMode
+            );
 
             //Bar Line
             const chipPixelPos: DTXChipPixelRectPos = {
                 laneType: "Bar",
                 rectPos: {
-                    posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["Bar"].posX,
+                    posX:
+                        chipLinePosInCanvas.posX +
+                        DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
                     posY: chipLinePosInCanvas.posY,
-                    width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
-                    height: this.DM_CHIP_POS_SIZE_INFO["Bar"].height
+                    width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
+                    height: DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("Bar")?.height as number
                 }
             };
 
@@ -345,8 +323,8 @@ export class DtxCanvasPositioner {
                 rectPos: {
                     posX:
                         chipLinePosInCanvas.posX +
-                        this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
-                        this.DM_CHIP_POS_SIZE_INFO["Bar"].width +
+                        DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode) +
+                        DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode) +
                         5,
                     posY: chipLinePosInCanvas.posY,
                     width: 50,
@@ -368,17 +346,21 @@ export class DtxCanvasPositioner {
             const quarterBarLine: DTXLine = dtxJson.quarterBarLines[index];
             const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
                 quarterBarLine.barNumber,
-                quarterBarLine.timePosition
+                quarterBarLine.timePosition,
+                gameMode,
+                chartMode
             );
 
             //Bar Line
             const chipPixelPos: DTXChipPixelRectPos = {
                 laneType: "QuarterBar",
                 rectPos: {
-                    posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].posX,
+                    posX:
+                        chipLinePosInCanvas.posX +
+                        DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
                     posY: chipLinePosInCanvas.posY,
-                    width: this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].width,
-                    height: this.DM_CHIP_POS_SIZE_INFO["QuarterBar"].height
+                    width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
+                    height: DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("QuarterBar")?.height as number
                 }
             };
 
@@ -386,22 +368,25 @@ export class DtxCanvasPositioner {
         }
 
         //Compute for BPM change marker
+        const bpmMarkerRelativeRectPos = DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("BPMMarker");
         for (let index = 0; index < dtxJson.bpmSegments.length; index++) {
             const bpmSegment: DTXBpmSegment = dtxJson.bpmSegments[index];
 
             const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
                 bpmSegment.startBarNum,
-                bpmSegment.startTimePos
+                bpmSegment.startTimePos,
+                gameMode,
+                chartMode
             );
 
             //BPM Line
             const chipPixelPos: DTXChipPixelRectPos = {
                 laneType: "BPMMarker",
                 rectPos: {
-                    posX: chipLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].posX,
+                    posX: chipLinePosInCanvas.posX + (bpmMarkerRelativeRectPos ? bpmMarkerRelativeRectPos.posX : 0),
                     posY: chipLinePosInCanvas.posY,
-                    width: this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].width,
-                    height: this.DM_CHIP_POS_SIZE_INFO["BPMMarker"].height
+                    width: bpmMarkerRelativeRectPos ? bpmMarkerRelativeRectPos.width : 0,
+                    height: bpmMarkerRelativeRectPos ? bpmMarkerRelativeRectPos.height : 0
                 }
             };
 
@@ -429,7 +414,9 @@ export class DtxCanvasPositioner {
             const chip: DTXChip = dtxJson.chips[index];
             const chipLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
                 chip.lineTimePosition.barNumber,
-                chip.lineTimePosition.timePosition
+                chip.lineTimePosition.timePosition,
+                gameMode,
+                chartMode
             );
 
             //Iterate through the return array of chipPosSize to add multiple drawing chips
@@ -457,17 +444,20 @@ export class DtxCanvasPositioner {
         }
 
         //EndLine
+        const endLineRelativeRectPos = DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("EndLine");
         const endLinePosInCanvas = this.computePixelPosFromAbsoluteTime(
             dtxJson.bars.length - 1,
-            dtxJson.songInfo.songDuration
+            dtxJson.songInfo.songDuration,
+            gameMode,
+            chartMode
         );
         const endLinePixelPos: DTXChipPixelRectPos = {
             laneType: "EndLine",
             rectPos: {
-                posX: endLinePosInCanvas.posX + this.DM_CHIP_POS_SIZE_INFO["EndLine"].posX,
+                posX: endLinePosInCanvas.posX + (endLineRelativeRectPos ? endLineRelativeRectPos.posX : 0),
                 posY: endLinePosInCanvas.posY,
-                width: this.DM_CHIP_POS_SIZE_INFO["EndLine"].width,
-                height: this.DM_CHIP_POS_SIZE_INFO["EndLine"].height
+                width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
+                height: endLineRelativeRectPos ? endLineRelativeRectPos.height : 0
             }
         };
 
@@ -486,8 +476,13 @@ export class DtxCanvasPositioner {
         }
     }
 
-    private canvasWidthForFrames(numOfFrames: number): number {
-        return numOfFrames * (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right);
+    private canvasWidthForFrames(numOfFrames: number, gameMode: GameModeType, chartMode: ChartModeType): number {
+        return (
+            numOfFrames *
+            (DTXCanvasDrawConfigHelper.getFullBodyFrameWidth(gameMode, chartMode) +
+                this.BODY_FRAME_MARGINS.left +
+                this.BODY_FRAME_MARGINS.right)
+        );
     }
 
     private canvasHeightGivenBodySectionHeight(bodySectionHeight: number): number {
@@ -504,7 +499,9 @@ export class DtxCanvasPositioner {
 
     private computeBarIndexToFrameSheetMapping(
         dtxJson: DTXJson,
-        bodySectionHeight: number
+        bodySectionHeight: number,
+        gameMode: GameModeType,
+        chartMode: ChartModeType
     ): {
         barFrameSheetMapping: DTXInterimBarPosType[];
         numOfCanvas: number;
@@ -534,11 +531,13 @@ export class DtxCanvasPositioner {
                     rectPos: {
                         posX:
                             this.BODY_FRAME_MARGINS.left +
-                            this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
+                            DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode) +
                             currFrameNum *
-                                (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                                (DTXCanvasDrawConfigHelper.getFullBodyFrameWidth(gameMode, chartMode) +
+                                    this.BODY_FRAME_MARGINS.left +
+                                    this.BODY_FRAME_MARGINS.right),
                         posY: 0,
-                        width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
+                        width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
                         height: currFramePosY
                     },
                     canvasSheetIndex: currCanvasSheetIndex
@@ -551,7 +550,7 @@ export class DtxCanvasPositioner {
 
                 //Check if next frame can fit within current canvas sheet
                 if (currFrameNum + 1 > this.MAX_PAGEPERCANVAS) {
-                    returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1));
+                    returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1, gameMode, chartMode));
                     incrementCanvasIndex = true;
                     currFrameNum = 0;
                 } else {
@@ -589,7 +588,7 @@ export class DtxCanvasPositioner {
 
         //Store the body section width of all frames one last time if not present
         if (returnedWidthPerCanvas.length !== currCanvasSheetIndex + 1) {
-            returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1));
+            returnedWidthPerCanvas.push(this.canvasWidthForFrames(currFrameNum + 1, gameMode, chartMode));
         }
 
         //Push the final frame rect after looping is done
@@ -598,11 +597,13 @@ export class DtxCanvasPositioner {
             rectPos: {
                 posX:
                     this.BODY_FRAME_MARGINS.left +
-                    this.DM_CHIP_POS_SIZE_INFO["Bar"].posX +
+                    DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode) +
                     currFrameNum *
-                        (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right),
+                        (DTXCanvasDrawConfigHelper.getFullBodyFrameWidth(gameMode, chartMode) +
+                            this.BODY_FRAME_MARGINS.left +
+                            this.BODY_FRAME_MARGINS.right),
                 posY: 0,
-                width: this.DM_CHIP_POS_SIZE_INFO["Bar"].width,
+                width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
                 height: greatestFrameHeightPerCanvas[currCanvasSheetIndex]
             },
             canvasSheetIndex: currCanvasSheetIndex
@@ -620,11 +621,11 @@ export class DtxCanvasPositioner {
     /*
   Calculate max possible Body Section Rect per Frame
   */
-    private availableBodySectionRect(maxHeight: number): DTXRect {
+    private availableBodySectionRect(maxHeight: number, gameMode: GameModeType, chartMode: ChartModeType): DTXRect {
         return {
             posX: this.BODY_FRAME_MARGINS.left,
             posY: this.HEADER_SECTION_HEIGHT + this.SECTION_SPLIT_MARGIN + this.BODY_FRAME_MARGINS.top,
-            width: this.BODY_FRAME_WIDTH,
+            width: DTXCanvasDrawConfigHelper.getFullBodyFrameWidth(gameMode, chartMode),
             height:
                 maxHeight -
                 (this.HEADER_SECTION_HEIGHT +
@@ -644,13 +645,17 @@ export class DtxCanvasPositioner {
      */
     private computePixelPosFromAbsoluteTime(
         barNum: number,
-        absTime: number
+        absTime: number,
+        gameMode: GameModeType,
+        chartMode: ChartModeType
     ): { posX: number; posY: number; canvasSheetIndex: number } {
         //Compute PosX and CanvasSheet index
         const posX: number =
             this.BODY_FRAME_MARGINS.left +
             this.barIndexToFrameSheetMapping[barNum].frameIndex *
-                (this.BODY_FRAME_WIDTH + this.BODY_FRAME_MARGINS.left + this.BODY_FRAME_MARGINS.right);
+                (DTXCanvasDrawConfigHelper.getFullBodyFrameWidth(gameMode, chartMode) +
+                    this.BODY_FRAME_MARGINS.left +
+                    this.BODY_FRAME_MARGINS.right);
         const canvasSheetIndex = this.barIndexToFrameSheetMapping[barNum].canvasSheetIndex;
 
         //Retrieve the actual Body Section Height for current canvas
@@ -658,7 +663,7 @@ export class DtxCanvasPositioner {
         const currCanvasBodySectionRect: DTXRect = {
             posX: this.BODY_FRAME_MARGINS.left,
             posY: this.HEADER_SECTION_HEIGHT + this.SECTION_SPLIT_MARGIN + this.BODY_FRAME_MARGINS.top,
-            width: this.BODY_FRAME_WIDTH,
+            width: DTXCanvasDrawConfigHelper.getFullBodyFrameWidth(gameMode, chartMode),
             height: currCanvasBodySectionHeight
         };
 

@@ -18,12 +18,15 @@ interface DTXChipDrawingLane {
 const DEFAULT_CHIP_HEIGHT = 5;
 const DEFAULT_CHIP_WIDTH = 18;
 
+const DEFAULT_FRAME_RECT_WIDTH = 201;
+
 const COMMON_CHIP_POS_SIZE_INFO: DTXCanvasLaneToChipRelativePosSize = {
-    Bar: { posX: 60, width: 200, height: 2 },
-    QuarterBar: { posX: 60, width: 200, height: 1 },
-    BGM: { posX: 60, width: 200, height: 2 },
-    EndLine: { posX: 60, width: 200, height: 2 },
-    BPMMarker: { posX: 50, width: 10, height: 2 }
+    Bar: { posX: 60, width: DEFAULT_FRAME_RECT_WIDTH, height: 2 }, //Not actually a chip
+    QuarterBar: { posX: 60, width: DEFAULT_FRAME_RECT_WIDTH, height: 1 }, //Not actually a chip
+    BGM: { posX: 60, width: DEFAULT_FRAME_RECT_WIDTH, height: 2 },
+    EndLine: { posX: 60, width: DEFAULT_FRAME_RECT_WIDTH, height: 2 }, //Not actually a chip
+    BPMMarker: { posX: 50, width: 10, height: 2 },
+    BarNumMarker: { posX: 261, width: 39, height: 9 } //Takes up remaining space of 39 pixel, total width for DM is 300
 };
 
 const DM_CHIP_POS_SIZE_INFO: DTXCanvasLaneToChipRelativePosSize = {
@@ -48,13 +51,11 @@ const GUITAR_BASS_CHIP_POS_SIZE_INFO: DTXCanvasLaneToChipRelativePosSize = {
     Pink: { posX: 132, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
     Open: { posX: 60, width: (DEFAULT_CHIP_WIDTH + 1) * 5, height: DEFAULT_CHIP_HEIGHT },
     OpenV: { posX: 60, width: (DEFAULT_CHIP_WIDTH + 1) * 3, height: DEFAULT_CHIP_HEIGHT },
-    Wail: { posX: 150, width: 15, height: 19 }
+    Wail: { posX: 155, width: 15, height: 19 }
 };
 
 const GUITAR_BASS_BUTTON_ORDER: string[] = ["Red", "Green", "Blue", "Yellow", "Pink"];
 const GUITAR_BASS_V_BUTTON_ORDER: string[] = ["Red", "Green", "Blue", "Green", "Blue"];
-
-export type { DTXCanvasLaneToChipRelativePosSize };
 
 class DTXCanvasDrawConfigHelper {
     public static getRelativeSizePosOfChipsForLaneCode(
@@ -64,48 +65,55 @@ class DTXCanvasDrawConfigHelper {
     ): DTXChipDrawingLane[] {
         let retArray: DTXChipDrawingLane[] = [];
 
-        if (gameMode === "Drum") {
-            const combinedMap: DTXCanvasLaneToChipRelativePosSize = {
-                ...COMMON_CHIP_POS_SIZE_INFO,
-                ...DM_CHIP_POS_SIZE_INFO
+        //Draw common chips like BGM, BPM markers
+        if (COMMON_CHIP_POS_SIZE_INFO[laneCode]) {
+            let currChipRelativePosSize: DTXChipRelativePosSize = COMMON_CHIP_POS_SIZE_INFO[laneCode];
+            //BGM is the only chip that is drawn covering the full Frame Rect
+            //Since the Frame Rect width is dynamic according to game and chart mode, it is set here specifically
+            if (laneCode === "BGM") {
+                currChipRelativePosSize = {
+                    ...currChipRelativePosSize,
+                    width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode)
+                };
+            }
+
+            const chipDrawingLane: DTXChipDrawingLane = {
+                drawingLane: laneCode,
+                chipRelativePosSize: currChipRelativePosSize
             };
-            let tempLaneCode = laneCode;
-            //Re-map to other lanes for modes with fewer lanes
-            if (chartMode === "XG/Gitadora") {
-                if (tempLaneCode === "RideCymbal") {
-                    tempLaneCode = "RightCrashCymbal";
-                } else if (tempLaneCode === "LeftBassPedal") {
-                    tempLaneCode = "LeftHiHatPedal";
-                }
-            } else if (chartMode === "Classic") {
-                if (tempLaneCode === "LeftCrashCymbal") {
-                    tempLaneCode = "Hi-Hat";
-                } else if (tempLaneCode === "LeftBassPedal" || tempLaneCode === "LeftHiHatPedal") {
-                    tempLaneCode = "RightBassPedal";
-                } else if (tempLaneCode === "Floor-Tom") {
-                    tempLaneCode = "Low-Tom";
-                } else if (tempLaneCode === "RideCymbal") {
-                    tempLaneCode = "RightCrashCymbal";
-                }
-            }
 
-            if (combinedMap[tempLaneCode]) {
-                const drumChipDrawingLane: DTXChipDrawingLane = {
-                    drawingLane: tempLaneCode,
-                    chipRelativePosSize: combinedMap[tempLaneCode]
-                };
-
-                retArray.push(drumChipDrawingLane);
-            }
+            retArray.push(chipDrawingLane);
         } else {
-            //Draw common chips like bar lines, BPM markers the same way for Guitar/Bass
-            if (COMMON_CHIP_POS_SIZE_INFO[laneCode]) {
-                const chipDrawingLane: DTXChipDrawingLane = {
-                    drawingLane: laneCode,
-                    chipRelativePosSize: COMMON_CHIP_POS_SIZE_INFO[laneCode]
-                };
+            if (gameMode === "Drum") {
+                const combinedMap: DTXCanvasLaneToChipRelativePosSize = DM_CHIP_POS_SIZE_INFO;
+                let tempLaneCode = laneCode;
+                //Re-map to other lanes for modes with fewer lanes
+                if (chartMode === "XG/Gitadora") {
+                    if (tempLaneCode === "RideCymbal") {
+                        tempLaneCode = "RightCrashCymbal";
+                    } else if (tempLaneCode === "LeftBassPedal") {
+                        tempLaneCode = "LeftHiHatPedal";
+                    }
+                } else if (chartMode === "Classic") {
+                    if (tempLaneCode === "LeftCrashCymbal") {
+                        tempLaneCode = "Hi-Hat";
+                    } else if (tempLaneCode === "LeftBassPedal" || tempLaneCode === "LeftHiHatPedal") {
+                        tempLaneCode = "RightBassPedal";
+                    } else if (tempLaneCode === "Floor-Tom") {
+                        tempLaneCode = "Low-Tom";
+                    } else if (tempLaneCode === "RideCymbal") {
+                        tempLaneCode = "RightCrashCymbal";
+                    }
+                }
 
-                retArray.push(chipDrawingLane);
+                if (combinedMap[tempLaneCode]) {
+                    const drumChipDrawingLane: DTXChipDrawingLane = {
+                        drawingLane: tempLaneCode,
+                        chipRelativePosSize: combinedMap[tempLaneCode]
+                    };
+
+                    retArray.push(drumChipDrawingLane);
+                }
             } else {
                 //Guitar/Bass
                 if (laneCode === "GWail" && gameMode === "Guitar") {
@@ -139,6 +147,35 @@ class DTXCanvasDrawConfigHelper {
         }
 
         return retArray;
+    }
+
+    public static getFrameRectRelativePosX(gameMode: GameModeType, chartMode: ChartModeType): number {
+        return COMMON_CHIP_POS_SIZE_INFO.Bar.posX;
+    }
+
+    public static getFrameRectWidth(gameMode: GameModeType, chartMode: ChartModeType): number {
+        //Set to default value of 201
+        let retWidth = COMMON_CHIP_POS_SIZE_INFO.Bar.width;
+        if (gameMode === "Drum") {
+            if (chartMode === "Classic" || chartMode === "XG/Gitadora") {
+                retWidth = retWidth - DM_CHIP_POS_SIZE_INFO["RideCymbal"].width;
+            }
+        } else {
+            retWidth = (DEFAULT_CHIP_WIDTH + 1) * 5 + GUITAR_BASS_CHIP_POS_SIZE_INFO.Wail.width;
+        }
+        return retWidth;
+    }
+
+    public static getFullBodyFrameWidth(gameMode: GameModeType, chartMode: ChartModeType): number {
+        return (
+            COMMON_CHIP_POS_SIZE_INFO.Bar.posX +
+            DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode) +
+            COMMON_CHIP_POS_SIZE_INFO.BarNumMarker.width
+        );
+    }
+
+    public static getCommonChipRelativePosSize(laneCode: string): DTXChipRelativePosSize | undefined {
+        return COMMON_CHIP_POS_SIZE_INFO[laneCode];
     }
 
     private static convertLaneCodeToButtonPressArray(
@@ -192,7 +229,7 @@ class DTXCanvasDrawConfigHelper {
 
             //If still empty, means 00000 i.e. OPEN
             if (retButtonPressArray.length === 0) {
-                retButtonPressArray.push( chartMode == "Classic" ? "OpenV" :"Open");
+                retButtonPressArray.push(chartMode == "Classic" ? "OpenV" : "Open");
             }
 
             return retButtonPressArray;
@@ -202,6 +239,6 @@ class DTXCanvasDrawConfigHelper {
     }
 }
 
-export type { DTXChipDrawingLane, DTXChipRelativePosSize };
+export type { DTXChipDrawingLane, DTXChipRelativePosSize, DTXCanvasLaneToChipRelativePosSize };
 
 export default DTXCanvasDrawConfigHelper;
