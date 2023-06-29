@@ -171,26 +171,26 @@ const GDALaneCodeMappingForDrum: LaneCodeRemap[] = [
 ];
 
 const GDALaneCodeMappingForGuitar: LaneCodeRemap[] = [
-    { code: ["G0"], name: "G000" },
-    { code: ["G1"], name: "G001" },
-    { code: ["G2"], name: "G010" },
-    { code: ["G3"], name: "G011" },
-    { code: ["G4"], name: "G100" },
-    { code: ["G5"], name: "G101" },
-    { code: ["G6"], name: "G110" },
-    { code: ["G7"], name: "G111" },
+    { code: ["G0"], name: "G00000" },
+    { code: ["G1"], name: "G00100" },
+    { code: ["G2"], name: "G01000" },
+    { code: ["G3"], name: "G01100" },
+    { code: ["G4"], name: "G10000" },
+    { code: ["G5"], name: "G10100" },
+    { code: ["G6"], name: "G11000" },
+    { code: ["G7"], name: "G11100" },
     { code: ["GW"], name: "GWail" }
 ];
 
 const GDALaneCodeMappingForBass: LaneCodeRemap[] = [
-    { code: ["B0"], name: "B000" },
-    { code: ["B1"], name: "B001" },
-    { code: ["B2"], name: "B010" },
-    { code: ["B3"], name: "B011" },
-    { code: ["B4"], name: "B100" },
-    { code: ["B5"], name: "B101" },
-    { code: ["B6"], name: "B110" },
-    { code: ["B7"], name: "B111" },
+    { code: ["B0"], name: "B00000" },
+    { code: ["B1"], name: "B00100" },
+    { code: ["B2"], name: "B01000" },
+    { code: ["B3"], name: "B01100" },
+    { code: ["B4"], name: "B10000" },
+    { code: ["B5"], name: "B10100" },
+    { code: ["B6"], name: "B11000" },
+    { code: ["B7"], name: "B11100" },
     { code: ["BW"], name: "BWail" }
 ];
 

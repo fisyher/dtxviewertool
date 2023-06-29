@@ -46,8 +46,15 @@ const Viewer: React.FC = () => {
                     gameMode: "Drum",
                     isLevelShown: true
                 };
-                console.log(drawingOptions);
+                
                 dispatch(loadDtxJsonIntoEngine({ dtxJson: dtxJsonObject, drawingOptions }));
+                //Load Guitar Chips
+                drawingOptions.gameMode = "Guitar";                
+                dispatch(loadDtxJsonIntoEngine({ dtxJson: dtxJsonObject, drawingOptions }));
+                //Load Bass Chips
+                drawingOptions.gameMode = "Bass";                
+                dispatch(loadDtxJsonIntoEngine({ dtxJson: dtxJsonObject, drawingOptions }));
+
             }
         } else {
             //Handle use effect trigger not caused by change in chart Status
@@ -61,6 +68,12 @@ const Viewer: React.FC = () => {
                     gameMode: "Drum",
                     isLevelShown: true
                 };
+                dispatch(loadDtxJsonIntoEngine({ dtxJson: dtxJsonObject, drawingOptions }));
+                //Load Guitar Chips
+                drawingOptions.gameMode = "Guitar";                
+                dispatch(loadDtxJsonIntoEngine({ dtxJson: dtxJsonObject, drawingOptions }));
+                //Load Bass Chips
+                drawingOptions.gameMode = "Bass";                
                 dispatch(loadDtxJsonIntoEngine({ dtxJson: dtxJsonObject, drawingOptions }));
             }
         }

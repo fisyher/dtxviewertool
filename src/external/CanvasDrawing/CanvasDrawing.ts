@@ -47,7 +47,7 @@ export default class CanvasDrawing {
 
     public static initLoadAllAssets(): void {
         const imageAssetPromises: Promise<Record<string, HTMLImageElement>>[] = [];
-
+        //Drum assets
         imageAssetPromises.push(
             CanvasDrawing.loadImageAsObject("LeftCrashCymbal", require("../../assets/images/leftcymbal_chip.png"))
         );
@@ -103,6 +103,80 @@ export default class CanvasDrawing {
             CanvasDrawing.loadImageAsObject(
                 "DrumMasterBannerSmall",
                 require("../../assets/images/DrumMasterBannerSmall.png")
+            )
+        );
+
+        //Guitar/Bass assets
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Red", require("../../assets/images/red_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Green", require("../../assets/images/green_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Blue", require("../../assets/images/blue_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Yellow", require("../../assets/images/yellow_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Pink", require("../../assets/images/mag_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Wail", require("../../assets/images/wail_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("Open", require("../../assets/images/open_gfchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("OpenV", require("../../assets/images/open_gfvchip.png"))
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "GuitarBasicBannerSmall",
+                require("../../assets/images/GuitarBasicBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "GuitarAdvancedBannerSmall",
+                require("../../assets/images/GuitarAdvancedBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "GuitarExtremeBannerSmall",
+                require("../../assets/images/GuitarExtremeBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "GuitarMasterBannerSmall",
+                require("../../assets/images/GuitarMasterBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "BassBasicBannerSmall",
+                require("../../assets/images/BassBasicBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "BassAdvancedBannerSmall",
+                require("../../assets/images/BassAdvancedBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "BassExtremeBannerSmall",
+                require("../../assets/images/BassExtremeBannerSmall.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "BassMasterBannerSmall",
+                require("../../assets/images/BassMasterBannerSmall.png")
             )
         );
 

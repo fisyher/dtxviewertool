@@ -6,6 +6,45 @@ import { ReactNode, useCallback, useMemo, useState } from "react";
 import { fabric } from "fabric";
 import CanvasDrawing from "../../external/CanvasDrawing/CanvasDrawing";
 
+const useDTXCanvasHook = (inputChartState: CanvasChartState, prefix: string) => {
+    const drawCanvasFunction = useCallback(
+        (canvas: fabric.StaticCanvas, sourceObjectIndex: number) => {
+            console.log("drawCanvas func called");
+            console.log(sourceObjectIndex);
+
+            if (canvas && inputChartState.status === "loaded") {
+                //Clear canvas before re-drawing
+                CanvasDrawing.clear(canvas);
+                CanvasDrawing.drawAllChipsOntoCanvas(canvas, inputChartState.canvasDTXObjects[sourceObjectIndex]);
+                canvas.renderAll();
+            }
+        },
+        [inputChartState]
+    );
+
+    const fabricComponents = useMemo(() => {
+        let retComponents: ReactNode = <Typography variant="h5">Load a DTX File to start</Typography>;
+        
+        if (inputChartState.status === "loaded") {
+            retComponents = inputChartState.canvasDTXObjects.map((canvasDTXObject, index) => {
+                return (
+                    <FabricCanvas
+                        key={`${prefix}-canvas-${index}`}
+                        id={`${prefix}-canvas-${index}`}
+                        sourceObjectIndex={index}
+                        canvasProps={{ ...canvasDTXObject.canvasSize, backgroundColor: "#000000" }}
+                        drawFunction={drawCanvasFunction}
+                    ></FabricCanvas>
+                );
+            });
+        } else {
+            //console.log("in useMemo: status is " + Drum.status);
+        }
+        return retComponents;
+    }, [inputChartState, prefix]);
+
+    return [fabricComponents];
+};
 
 const OutputPane: React.FC = () => {
     const { Drum, Guitar, Bass, overallStatus }: CanvasEngineOverallState = useAppSelector((state) => state.canvasDTX);
@@ -16,41 +55,9 @@ const OutputPane: React.FC = () => {
         setTabValue(newValue);
     };
 
-    const drawDrumCanvasFunction = useCallback(
-        (canvas: fabric.StaticCanvas, sourceObjectIndex: number) => {
-            console.log("drawCanvas func called");
-            console.log(sourceObjectIndex);
-
-            if (canvas && Drum.status === "loaded") {
-                //Clear canvas before re-drawing
-                CanvasDrawing.clear(canvas);
-                CanvasDrawing.drawAllChipsOntoCanvas(canvas, Drum.canvasDTXObjects[sourceObjectIndex]);
-                canvas.renderAll();
-            }
-        },
-        [Drum]
-    );
-
-    const fabricComponentsForDrum = useMemo(() => {
-        let retComponents: ReactNode = <Typography variant="h5">Load a DTX File to start</Typography>;
-        console.log("in useMemo: status is " + Drum.status);
-        if (Drum.status === "loaded") {
-            retComponents = Drum.canvasDTXObjects.map((canvasDTXObject, index) => {
-                return (
-                    <FabricCanvas
-                        key={`drum-canvas-${index}`}
-                        id={`drum-canvas-${index}`}
-                        sourceObjectIndex={index}
-                        canvasProps={{ ...canvasDTXObject.canvasSize, backgroundColor: "#000000" }}
-                        drawFunction={drawDrumCanvasFunction}
-                    ></FabricCanvas>
-                );
-            });
-        } else {
-            //console.log("in useMemo: status is " + Drum.status);
-        }
-        return retComponents;
-    }, [Drum]);
+    const [drumFabricComponents] = useDTXCanvasHook(Drum, "drum");
+    const [guitarFabricComponents] = useDTXCanvasHook(Guitar, "guitar");
+    const [bassFabricComponents] = useDTXCanvasHook(Bass, "Bass");
 
     return (
         <Paper className="my-paper">
@@ -80,7 +87,7 @@ const OutputPane: React.FC = () => {
                     display: tabValue !== 0 ? "none" : undefined
                 }}
             >
-                {fabricComponentsForDrum}
+                {drumFabricComponents}
             </Paper>
             <Paper
                 elevation={3}
@@ -92,7 +99,7 @@ const OutputPane: React.FC = () => {
                     display: tabValue !== 1 ? "none" : undefined
                 }}
             >
-                <Typography variant="h5">Guitar Chart under construction</Typography>
+                {guitarFabricComponents}
             </Paper>
             <Paper
                 elevation={3}
@@ -104,7 +111,7 @@ const OutputPane: React.FC = () => {
                     display: tabValue !== 2 ? "none" : undefined
                 }}
             >
-                <Typography variant="h5">Bass Chart under construction</Typography>
+                {bassFabricComponents}
             </Paper>
             <Paper
                 elevation={3}
