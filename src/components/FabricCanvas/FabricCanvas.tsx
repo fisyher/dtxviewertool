@@ -6,10 +6,10 @@ interface FabricCanvasProps {
     id: string;
     drawFunction: Function;
     canvasProps: { height: number; width: number; backgroundColor: string };
-    triggerDraw: number;
+    sourceObjectIndex: number;
 }
 
-const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasProps, triggerDraw }) => {
+const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasProps, sourceObjectIndex }) => {
     const elementRef = useRef<HTMLCanvasElement>(null);
     const [canvasObject, setCanvasObject] = useState<fabric.StaticCanvas | null>(null);
 
@@ -33,8 +33,8 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasPro
     }, [canvasProps, id]);
 
     useEffect(() => {
-        drawFunction(canvasObject, triggerDraw);
-    }, [canvasObject, triggerDraw, drawFunction]);
+        drawFunction(canvasObject, sourceObjectIndex);
+    }, [canvasObject, sourceObjectIndex, drawFunction]);
 
     return (
         <canvas id={id} ref={elementRef}></canvas>

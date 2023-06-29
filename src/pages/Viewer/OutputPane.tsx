@@ -1,11 +1,11 @@
 import { Paper, Typography, Box, Tabs, Tab, Card } from "@mui/material";
 import FabricCanvas from "../../components/FabricCanvas/FabricCanvas";
-import { CanvasEngineOverallState } from "../../app/reducers/canvasEngineReducer";
+import { CanvasChartState, CanvasEngineOverallState } from "../../app/reducers/canvasEngineReducer";
 import { useAppSelector } from "../../app/hooks";
 import { ReactNode, useCallback, useMemo, useState } from "react";
 import { fabric } from "fabric";
 import CanvasDrawing from "../../external/CanvasDrawing/CanvasDrawing";
-import styled from "@emotion/styled";
+
 
 const OutputPane: React.FC = () => {
     const { Drum, Guitar, Bass, overallStatus }: CanvasEngineOverallState = useAppSelector((state) => state.canvasDTX);
@@ -16,15 +16,15 @@ const OutputPane: React.FC = () => {
         setTabValue(newValue);
     };
 
-    const drawCanvasFunction = useCallback(
-        (canvas: fabric.StaticCanvas, renderCount: number) => {
+    const drawDrumCanvasFunction = useCallback(
+        (canvas: fabric.StaticCanvas, sourceObjectIndex: number) => {
             console.log("drawCanvas func called");
-            console.log(renderCount);
+            console.log(sourceObjectIndex);
 
             if (canvas && Drum.status === "loaded") {
                 //Clear canvas before re-drawing
                 CanvasDrawing.clear(canvas);
-                CanvasDrawing.drawAllChipsOntoCanvas(canvas, Drum.canvasDTXObjects[0]);
+                CanvasDrawing.drawAllChipsOntoCanvas(canvas, Drum.canvasDTXObjects[sourceObjectIndex]);
                 canvas.renderAll();
             }
         },
@@ -40,9 +40,9 @@ const OutputPane: React.FC = () => {
                     <FabricCanvas
                         key={`drum-canvas-${index}`}
                         id={`drum-canvas-${index}`}
-                        triggerDraw={0}
+                        sourceObjectIndex={index}
                         canvasProps={{ ...canvasDTXObject.canvasSize, backgroundColor: "#000000" }}
-                        drawFunction={drawCanvasFunction}
+                        drawFunction={drawDrumCanvasFunction}
                     ></FabricCanvas>
                 );
             });

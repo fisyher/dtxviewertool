@@ -56,8 +56,8 @@ class DTXCanvasDrawConfigHelper {
                 ...DM_CHIP_POS_SIZE_INFO
             };
             let tempLaneCode = laneCode;
+            //Re-map to other lanes for modes with fewer lanes
             if (chartMode === "XG/Gitadora") {
-                //Re-map to other lanes for modes with fewer lanes
                 if (tempLaneCode === "RideCymbal") {
                     tempLaneCode = "RightCrashCymbal";
                 } else if (tempLaneCode === "LeftBassPedal") {
@@ -82,6 +82,19 @@ class DTXCanvasDrawConfigHelper {
                 };
 
                 retArray.push(drumChipDrawingLane);
+            }
+        } else {
+            //Draw common chips like bar lines, BPM markers the same way for Guitar/Bass
+            if(COMMON_CHIP_POS_SIZE_INFO[laneCode]){
+                const chipDrawingLane: DTXChipDrawingLane = {
+                    drawingLane: laneCode,
+                    chipRelativePosSize: COMMON_CHIP_POS_SIZE_INFO[laneCode]
+                };
+
+                retArray.push(chipDrawingLane);
+            }
+            else{
+                //Guitar/Bass chips
             }
         }
 
