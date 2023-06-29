@@ -38,12 +38,12 @@ export class DtxCanvasPositioner {
     readonly MIN_PAGEPERCANVAS = 6;
     readonly MAX_PAGEPERCANVAS = 50;
 
-    readonly HEADER_SECTION_HEIGHT = 60;
+    readonly HEADER_SECTION_HEIGHT = 65;
     readonly SECTION_SPLIT_MARGIN = 2;
-    readonly FOOTER_SECTION_HEIGHT = 50;
+    readonly FOOTER_SECTION_HEIGHT = 25;
     readonly BODY_FRAME_MARGINS = {
-        top: 10,
-        bottom: 10,
+        top: 25,
+        bottom: 25,
         left: 0,
         right: 0
     };
@@ -110,8 +110,15 @@ export class DtxCanvasPositioner {
         const maxBodySectionRect = this.availableBodySectionRect(drawingOptions.maxHeight);
 
         this.actualPixelsPerSecond = drawingOptions.scale * this.BASE_PIXELS_PER_SECOND;
-        this.isDrawFromDownToUp = this.DEFAULT_DRAW_DIRECTION_DOWN_TO_UP;
 
+        //Decide draw direction based on game mode
+        if(drawingOptions.gameMode === "Drum"){
+            this.isDrawFromDownToUp = true;
+        }
+        else{
+            this.isDrawFromDownToUp = false;
+        }
+        
         //Compute the interim mapping of Bar to Frame/Sheet index, number of canvas, body section height and canvas-width
         //Ensure entire bars would be drawn within the same frame
         const { barFrameSheetMapping, numOfCanvas, bodySectionHeightPerCanvas, widthPerCanvas, partialFrameRect } =
@@ -140,12 +147,19 @@ export class DtxCanvasPositioner {
             const currCanvasHeight: number = this.canvasHeightGivenBodySectionHeight(
                 bodySectionHeightPerCanvas[frameRect.canvasSheetIndex]
             );
-            frameRect.rectPos.posY =
+
+            if(this.isDrawFromDownToUp){
+                frameRect.rectPos.posY =
                 currCanvasHeight -
                 (this.FOOTER_SECTION_HEIGHT +
                     this.SECTION_SPLIT_MARGIN +
-                    this.BODY_FRAME_MARGINS.top +
+                    this.BODY_FRAME_MARGINS.bottom +
                     frameRect.rectPos.height);
+            }
+            else{
+                frameRect.rectPos.posY = this.HEADER_SECTION_HEIGHT + this.SECTION_SPLIT_MARGIN + this.BODY_FRAME_MARGINS.top;
+            }
+            
             //Also push the frameRect info into canvasDTXObjects
             this.canvasDTXObjects[frameRect.canvasSheetIndex].frameRect.push({ ...frameRect.rectPos });
         }
