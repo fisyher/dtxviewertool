@@ -205,11 +205,18 @@ export default class CanvasDrawing {
     }
 
     public static drawAllChipsOntoCanvas(canvasObject: fabric.StaticCanvas, canvasData: DTXCanvasDataType) {
-        //Draw all panels first
+        //Draw all frame panels first
         for (let index = 0; index < canvasData.frameRect.length; index++) {
             const currFrameRect: DTXRect = canvasData.frameRect[index];
 
             this.addRectangle(canvasObject, { ...currFrameRect }, { fill: this.DEFAULT_BACKGROUND_COLOR });
+        }
+
+        //Draw hold notes rect next
+        for (let index = 0; index < canvasData.holdNoteRect.length; index++) {
+            const currHoldNoteRect: DTXRect = canvasData.holdNoteRect[index];
+            
+            this.addRectangle(canvasObject, { ...currHoldNoteRect }, { fill: "yellow" });
         }
 
         //Draw all lines and chips

@@ -62,10 +62,14 @@ export class DtxCanvasPositioner {
 
     private canvasDTXObjects: DTXCanvasDataType[] = [];
 
+    private barInfoArray: Array<DTXBar> = [];
+
     /**
      * Constructor takes in DTXJson object and a Drawing configuration selected by UI
      */
     constructor(dtxJson: DTXJson, drawingOptions: DTXDrawingConfig) {
+        this.barInfoArray = dtxJson.bars;
+
         const maxBodySectionRect = this.availableBodySectionRect(
             drawingOptions.maxHeight,
             drawingOptions.gameMode,
@@ -99,6 +103,7 @@ export class DtxCanvasPositioner {
                 chipPositions: [],
                 textPositions: [],
                 frameRect: [],
+                holdNoteRect: [],
                 images: [],
                 canvasSize: {
                     width: widthPerCanvas[index],
@@ -419,6 +424,11 @@ export class DtxCanvasPositioner {
                 chartMode
             );
 
+            const holdNoteFrameRects: DTXFrameRect[] = this.computeRectsForHoldNotes(chip, gameMode, chartMode);
+            holdNoteFrameRects.forEach((holdNoteFrameRect) => {
+                this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push(holdNoteFrameRect.rectPos);
+            });
+
             //Iterate through the return array of chipPosSize to add multiple drawing chips
             const chipPosSizeArray: DTXChipDrawingLane[] =
                 DTXCanvasDrawConfigHelper.getRelativeSizePosOfChipsForLaneCode(chip.laneType, gameMode, chartMode);
@@ -463,6 +473,137 @@ export class DtxCanvasPositioner {
 
         this.canvasDTXObjects[endLinePosInCanvas.canvasSheetIndex].chipPositions.push(endLinePixelPos);
         // return retResult;
+    }
+
+    private computeRectsForHoldNotes(
+        holdNoteChip: DTXChip,
+        gameMode: GameModeType,
+        chartMode: ChartModeType
+    ): DTXFrameRect[] {
+        let retRectArray: DTXFrameRect[] = [];
+
+        //Chip has no endLineTimePosition
+        if (!holdNoteChip.endLineTimePosition) {
+            return retRectArray;
+        }
+
+        //No hold notes for Drum
+        if (gameMode === "Drum") {
+            return retRectArray;
+        }
+
+        let gameModePrefix: string = "G";
+        if (gameMode === "Bass") {
+            gameModePrefix = "B";
+        }
+
+        if (holdNoteChip.laneType.indexOf(gameModePrefix) === 0 && holdNoteChip.endLineTimePosition) {
+            let currTimePos: DTXLine = { ...holdNoteChip.lineTimePosition };
+
+            let barNumDifference: number =
+                holdNoteChip.endLineTimePosition.barNumber - holdNoteChip.lineTimePosition.barNumber;
+
+            let currOffset: number = 1;
+
+            while (barNumDifference > 0) {
+                //Create a Rect for current Bar
+                //Find the last future bar that is still within the same Frame
+                if (this.barIndexToFrameSheetMapping[currTimePos.barNumber + currOffset]) {
+                    const currFrameIndex = this.barIndexToFrameSheetMapping[currTimePos.barNumber].frameIndex;
+                    const currCanvasIndex = this.barIndexToFrameSheetMapping[currTimePos.barNumber].canvasSheetIndex;
+                    const barToFrame: DTXInterimBarPosType =
+                        this.barIndexToFrameSheetMapping[currTimePos.barNumber + currOffset];
+                    //If this bar is in the same FrameIndex, CanvasSheet, increment offset and continue
+                    if (barToFrame.canvasSheetIndex === currCanvasIndex && barToFrame.frameIndex === currFrameIndex) {
+                        //If already reach the end position, exit loop
+                        //Not required to create hold rect here
+                        if (currTimePos.barNumber + currOffset === holdNoteChip.endLineTimePosition.barNumber) {
+                            barNumDifference = 0;
+                            break;
+                        } else {
+                            currOffset++;
+                        }
+                    } else {
+                        //This bar is not in same frame, add to the holdNoteLinePosPairs array for previous bar and the current start timePos
+                        const prevBarNumber: number = currTimePos.barNumber + currOffset - 1;
+                        //Create the rect here
+                        const currPixPos: { posX: number; posY: number; canvasSheetIndex: number } =
+                            this.computePixelPosFromAbsoluteTime(
+                                currTimePos.barNumber,
+                                currTimePos.timePosition,
+                                gameMode,
+                                chartMode
+                            );
+                        const endFramePos: { posX: number; posY: number } | undefined = this.getEndPositionOfFrameRect(
+                            this.barIndexToFrameSheetMapping[prevBarNumber].canvasSheetIndex,
+                            this.barIndexToFrameSheetMapping[prevBarNumber].frameIndex,
+                            this.isDrawFromDownToUp
+                        );
+                        if (endFramePos) {
+                            const topLeftPosY: number =
+                                currPixPos.posY < endFramePos.posY ? currPixPos.posY : endFramePos.posY;
+                            const rectHeight: number = Math.abs(endFramePos.posY - currPixPos.posY);
+                            retRectArray.push({
+                                rectPos: { posX: currPixPos.posX, posY: topLeftPosY, width: 10, height: rectHeight },
+                                canvasSheetIndex: currPixPos.canvasSheetIndex
+                            });
+                        }
+
+                        //Set currTimePos to the beginning of first bar of next frame (which is current bar)
+                        currTimePos = {
+                            barNumber: currTimePos.barNumber + currOffset,
+                            timePosition: this.barInfoArray[currTimePos.barNumber + currOffset].startTimePos,
+                            lineNumberInBar: 0
+                        };
+                        barNumDifference = holdNoteChip.endLineTimePosition.barNumber - currTimePos.barNumber;
+                        //Reset for next iteration
+                        currOffset = 1;
+                    }
+                }
+            }
+
+            //Add the final/only rect when barNumDifference is 0
+            //Create the rect here
+            const startPixPos: { posX: number; posY: number; canvasSheetIndex: number } =
+                this.computePixelPosFromAbsoluteTime(
+                    currTimePos.barNumber,
+                    currTimePos.timePosition,
+                    gameMode,
+                    chartMode
+                );
+
+            const endPixPos: { posX: number; posY: number; canvasSheetIndex: number } =
+                this.computePixelPosFromAbsoluteTime(
+                    holdNoteChip.endLineTimePosition.barNumber,
+                    holdNoteChip.endLineTimePosition.timePosition,
+                    gameMode,
+                    chartMode
+                );
+
+            const topLeftPosY: number = startPixPos.posY < endPixPos.posY ? startPixPos.posY : endPixPos.posY;
+            const rectHeight: number = Math.abs(endPixPos.posY - startPixPos.posY);
+            retRectArray.push({
+                rectPos: { posX: startPixPos.posX, posY: topLeftPosY, width: 10, height: rectHeight },
+                canvasSheetIndex: startPixPos.canvasSheetIndex
+            });
+        }
+
+        return retRectArray;
+    }
+
+    private getEndPositionOfFrameRect(
+        canvasSheetIndex: number,
+        frameIndex: number,
+        isBottomUp: boolean
+    ): { posX: number; posY: number } | undefined {
+        const currFrameRect: DTXRect | undefined = this.canvasDTXObjects[canvasSheetIndex]?.frameRect[frameIndex];
+        if (currFrameRect) {
+            if (isBottomUp) {
+                return { posX: currFrameRect.posX, posY: currFrameRect.posY };
+            } else {
+                return { posX: currFrameRect.posX, posY: currFrameRect.posY + currFrameRect.height };
+            }
+        }
     }
 
     private computeActualPixelPosY(relativePosY: number, bodySectionRect: DTXRect, isBottomUp: boolean): number {

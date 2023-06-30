@@ -417,17 +417,20 @@ export class DtxFileParser {
         chipInfoToMatch: DTXChip,
         prefix: string
     ): DTXChip | undefined {
-        const regex = new RegExp(`[${prefix}](\\d{5})`, "g");
+        
 
         for (const prop in laneBarChipsData) {
             //Search only within GXXXXX or BXXXXX chips
+            //RegExp object is stateful so DO NOT pass the same object into matchSingleLineWithRegex, which runs exec for the same object multiple times
+            //TODO: Change matchSingleLineWithRegex so that it is not stateful!!!
+            const regex = new RegExp(`[${prefix}](\\d{5})`, "g");
             if (matchSingleLineWithRegex(prop, regex)) {
                 const chipsArray: DTXChip[] = laneBarChipsData[prop];
                 for (let index = 0; index < chipsArray.length; index++) {
                     const chip: DTXChip = chipsArray[index];
 
                     if (
-                        chip.chipCode !== "00" &&
+                        chipInfoToMatch.chipCode !== "00" &&
                         chip.lineTimePosition.barNumber === chipInfoToMatch.lineTimePosition.barNumber &&
                         chip.lineTimePosition.lineNumberInBar === chipInfoToMatch.lineTimePosition.lineNumberInBar
                     ) {
@@ -459,6 +462,7 @@ export class DtxFileParser {
 
             //Find hold notes for Guitar first
             if (element["GHold"]) {
+                
                 element["GHold"].forEach((holdNoteChip) => {
                     const foundChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
                         element,
@@ -472,6 +476,10 @@ export class DtxFileParser {
                             findGHoldNoteStart = false;
                         } else {
                             //Not found and no previous candidate hold note so do nothing
+                            // console.log("Found nothing for");
+                            // console.log(holdNoteChip);
+                            // console.log("in");
+                            // console.log(element);
                         }
                     } else {
                         if (!foundChip) {
@@ -483,6 +491,7 @@ export class DtxFileParser {
                             }
                         } else {
                             //Match found without candidate. The previous hold note is invalidated, reset findGHoldNoteStart
+                            //console.log("Found without candidate!!");
                         }
 
                         //Reset for next hold note

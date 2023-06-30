@@ -66,6 +66,7 @@ interface DTXCanvasDataType {
     chipPositions: DTXChipPixelRectPos[];
     textPositions: DTXTextRectPos[];
     frameRect: DTXRect[];
+    holdNoteRect: DTXRect[];
     images: DTXImageRectPos[];
     canvasSize: { width: number; height: number };
 }
