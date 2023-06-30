@@ -84,6 +84,7 @@ interface DTXChip {
     lineTimePosition: DTXLine;
     chipCode: string;
     laneType: string;
+    endLineTimePosition?: DTXLine;
 }
 
 interface DTXLaneChipCounter {

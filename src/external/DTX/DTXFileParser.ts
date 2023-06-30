@@ -1,3 +1,4 @@
+import { matchSingleLineWithRegex } from "../utility/StringFormatMatcher";
 import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson, DTXLine, DTXFileType } from "./DTXJsonTypes";
 import DTXJson from "./DTXJsonTypes";
 
@@ -86,6 +87,8 @@ const DTXLaneCodeMappingForDrum: LaneCodeRemap[] = [
 ];
 
 const DTXLaneCodeMappingForGuitar: LaneCodeRemap[] = [
+    //IMPORTANT for Hold notes to be placed before and Button Press so that we do not need to re-sort when searching for corresponding button press
+    { code: ["2C"], name: "GHold" },
     { code: ["20"], name: "G00000" },
     { code: ["21"], name: "G00100" },
     { code: ["22"], name: "G01000" },
@@ -118,11 +121,11 @@ const DTXLaneCodeMappingForGuitar: LaneCodeRemap[] = [
     { code: ["D1"], name: "G10111" },
     { code: ["D2"], name: "G11011" },
     { code: ["D3"], name: "G11111" },
-    { code: ["28"], name: "GWail" },
-    { code: ["2C"], name: "GHold" }
+    { code: ["28"], name: "GWail" }
 ];
 
 const DTXLaneCodeMappingForBass: LaneCodeRemap[] = [
+    { code: ["2D"], name: "BHold" },
     { code: ["A0"], name: "B00000" },
     { code: ["A1"], name: "B00100" },
     { code: ["A2"], name: "B01000" },
@@ -155,8 +158,7 @@ const DTXLaneCodeMappingForBass: LaneCodeRemap[] = [
     { code: ["E6"], name: "B10111" },
     { code: ["E7"], name: "B11011" },
     { code: ["E8"], name: "B11111" },
-    { code: ["A8"], name: "BWail" },
-    { code: ["2D"], name: "BHold" }
+    { code: ["A8"], name: "BWail" }
 ];
 
 //GDA Mappings
@@ -293,6 +295,9 @@ export class DtxFileParser {
 
             this.laneBarChipsArray = this.extractAndCreateLaneChipsArray(content);
 
+            //Find Hold note matches for Guitar and Bass
+            this.findHoldNotesMatches(this.laneBarChipsArray);
+
             //Note Count
             this.finalJson.songInfo.noteCountDrum = this.computeNoteCountDrum(this.fileType);
             this.finalJson.songInfo.noteCountGuitar = this.computeNoteCountGuitar(this.fileType);
@@ -404,6 +409,123 @@ export class DtxFileParser {
             this.finalJson.laneChipCounter[laneName] += count;
         } else {
             this.finalJson.laneChipCounter[laneName] = count;
+        }
+    }
+
+    private searchForGuitarBassChipWithEqualTimePosition(
+        laneBarChipsData: LaneBarChipsData,
+        chipInfoToMatch: DTXChip,
+        prefix: string
+    ): DTXChip | undefined {
+        const regex = new RegExp(`[${prefix}](\\d{5})`, "g");
+
+        for (const prop in laneBarChipsData) {
+            //Search only within GXXXXX or BXXXXX chips
+            if (matchSingleLineWithRegex(prop, regex)) {
+                const chipsArray: DTXChip[] = laneBarChipsData[prop];
+                for (let index = 0; index < chipsArray.length; index++) {
+                    const chip: DTXChip = chipsArray[index];
+
+                    if (
+                        chip.chipCode !== "00" &&
+                        chip.lineTimePosition.barNumber === chipInfoToMatch.lineTimePosition.barNumber &&
+                        chip.lineTimePosition.lineNumberInBar === chipInfoToMatch.lineTimePosition.lineNumberInBar
+                    ) {
+                        //FOUND!
+                        return chip;
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
+    private findHoldNotesMatches(laneChipsArray: LaneBarChipsData[]) {
+        let findGHoldNoteStart: boolean = true;
+        let findBHoldNoteStart: boolean = true;
+        let currentCandidateHoldNoteChipForG: DTXChip | undefined;
+        let currentCandidateHoldNoteChipForB: DTXChip | undefined;
+
+        /**
+         * Checking Conditions:
+         * 1. A StartHold must coincide timing-wise exactly with a Button Press note.
+         * 2. An EndHold must **not** coincide with any Button Press notes.
+         * 3. No other notes in between StartHold and EndHold timing-wise are allowed.
+         * 4. Value in Hold Notes must not be `00`
+         * */
+        for (let index = 0; index < laneChipsArray.length; index++) {
+            const element: LaneBarChipsData = laneChipsArray[index];
+
+            //Find hold notes for Guitar first
+            if (element["GHold"]) {
+                element["GHold"].forEach((holdNoteChip) => {
+                    const foundChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
+                        element,
+                        holdNoteChip,
+                        "G"
+                    );
+                    if (findGHoldNoteStart) {
+                        if (foundChip) {
+                            //Match found. Current chip is potentially a hold note chip so we store a reference
+                            currentCandidateHoldNoteChipForG = foundChip;
+                            findGHoldNoteStart = false;
+                        } else {
+                            //Not found and no previous candidate hold note so do nothing
+                        }
+                    } else {
+                        if (!foundChip) {
+                            //Set the endLineTimePosition for current hold note chip
+                            if (currentCandidateHoldNoteChipForG) {
+                                currentCandidateHoldNoteChipForG.endLineTimePosition = {
+                                    ...holdNoteChip.lineTimePosition
+                                };
+                            }
+                        } else {
+                            //Match found without candidate. The previous hold note is invalidated, reset findGHoldNoteStart
+                        }
+
+                        //Reset for next hold note
+                        currentCandidateHoldNoteChipForG = undefined;
+                        findGHoldNoteStart = true;
+                    }
+                });
+            }
+
+            //Find hold notes for Bass in the same manner
+            if (element["BHold"]) {
+                element["BHold"].forEach((holdNoteChip) => {
+                    const foundChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
+                        element,
+                        holdNoteChip,
+                        "B"
+                    );
+                    if (findBHoldNoteStart) {
+                        if (foundChip) {
+                            //Match found. Current chip is potentially a hold note chip
+                            currentCandidateHoldNoteChipForB = foundChip;
+                            findBHoldNoteStart = false;
+                        } else {
+                            //Not found and no previous candidate hold note so do nothing
+                        }
+                    } else {
+                        if (!foundChip) {
+                            //Set the endLineTimePosition for current hold note chip
+                            if (currentCandidateHoldNoteChipForB) {
+                                currentCandidateHoldNoteChipForB.endLineTimePosition = {
+                                    ...holdNoteChip.lineTimePosition
+                                };
+                            }
+                        } else {
+                            //Match found without candidate. The previous hold note is invalidated, reset findBHoldNoteStart
+                        }
+
+                        //Reset for next hold note
+                        currentCandidateHoldNoteChipForB = undefined;
+                        findBHoldNoteStart = true;
+                    }
+                });
+            }
         }
     }
 

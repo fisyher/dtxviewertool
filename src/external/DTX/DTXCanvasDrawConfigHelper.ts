@@ -1,3 +1,4 @@
+import { matchSingleLineWithRegex } from "../utility/StringFormatMatcher";
 import { ChartModeType, GameModeType } from "./DTXCanvasTypes";
 
 interface DTXChipRelativePosSize {
@@ -190,22 +191,7 @@ class DTXCanvasDrawConfigHelper {
 
         //Starts with G or B and has 5 numeric characters thereafter
         const regex = new RegExp(`[${prefix}](\\d{5})`, "g");
-
-        let matches: RegExpExecArray | null = null;
-        let laneCodeSupported: boolean = false;
-
-        while ((matches = regex.exec(laneCode)) !== null) {
-            // This is necessary to avoid infinite loops with zero-width matches
-            if (matches.index === regex.lastIndex) {
-                regex.lastIndex++;
-            }
-
-            // The result can be accessed through the `m`-variable.
-            matches.forEach((match, groupIndex) => {
-                console.log(`Found match, group ${groupIndex}: ${match}`);
-                laneCodeSupported = true;
-            });
-        }
+        const laneCodeSupported: boolean = matchSingleLineWithRegex(laneCode, regex);
 
         if (laneCodeSupported) {
             let retButtonPressArray: string[] = [];
