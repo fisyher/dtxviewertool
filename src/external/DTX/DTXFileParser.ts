@@ -487,6 +487,13 @@ export class DtxFileParser {
         barIndex: number,
         currCandidateHoldNoteChip: DTXChip | undefined
     ): DTXChip | undefined {
+        /**
+         * Checking Conditions:
+         * 1. A StartHold must coincide timing-wise exactly with a non-Open Button Press note i.e. Open note is not allowed
+         * 2. An EndHold must **not** coincide with any Button Press notes.
+         * 3. No other notes in between StartHold and EndHold timing-wise are allowed.
+         * 4. Value in Hold Notes must not be `00`
+         * */
         let tempCurrCandidateHoldNoteChip: DTXChip | undefined = currCandidateHoldNoteChip;
         if (currLaneBarChips[`${gameModePrefix}Hold`]) {
             //Usually 1 Start/End Hold note chip in a bar but may have both in the same bar for very short hold notes
@@ -503,8 +510,12 @@ export class DtxFileParser {
                         }
                     );
                     if (foundChip) {
-                        //Match found. Current chip is potentially a hold note chip so we store a reference
-                        tempCurrCandidateHoldNoteChip = foundChip;
+                        //Match found.
+                        //Further check that this is not an Open Note before accepting the match
+                        if(foundChip.laneType !== `${gameModePrefix}00000`){
+                            //Current chip is potentially a hold note chip so we store a reference
+                            tempCurrCandidateHoldNoteChip = foundChip;
+                        }                         
                     } else {
                         //Not found and no previous candidate hold note so do nothing
                         console.log("Found candidate for");
@@ -605,13 +616,7 @@ export class DtxFileParser {
         let currentCandidateHoldNoteChipForG: DTXChip | undefined;
         let currentCandidateHoldNoteChipForB: DTXChip | undefined;
 
-        /**
-         * Checking Conditions:
-         * 1. A StartHold must coincide timing-wise exactly with a Button Press note.
-         * 2. An EndHold must **not** coincide with any Button Press notes.
-         * 3. No other notes in between StartHold and EndHold timing-wise are allowed.
-         * 4. Value in Hold Notes must not be `00`
-         * */
+        
         for (let barIndex = 0; barIndex < laneChipsArray.length; barIndex++) {
             const element: LaneBarChipsData = laneChipsArray[barIndex];
 
