@@ -473,9 +473,135 @@ export class DtxFileParser {
         return;
     }
 
+    /**
+     *
+     * @param gameModePrefix Either "G" or "B"
+     * @param currLaneBarChips Current LaneBarChipsData which holds all chips within this bar
+     * @param barIndex Current bar Index number
+     * @param currCandidateHoldNoteChip The existing candidate Start Hold Note Chip if any
+     * @returns the input candidate Hold Note Chip if an End Note is not found yet in this bar or a new candidate Hold Note Chip if a new Start Hold has been found, or undefined if none is found
+     */
+    private processHoldNotesInBar(
+        gameModePrefix: string,
+        currLaneBarChips: LaneBarChipsData,
+        barIndex: number,
+        currCandidateHoldNoteChip: DTXChip | undefined
+    ): DTXChip | undefined {
+        let tempCurrCandidateHoldNoteChip: DTXChip | undefined = currCandidateHoldNoteChip;
+        if (currLaneBarChips[`${gameModePrefix}Hold`]) {
+            //Usually 1 Start/End Hold note chip in a bar but may have both in the same bar for very short hold notes
+            //Assumes multiple Hold Chips within the same bar is sorted by ascending order!!
+            currLaneBarChips[`${gameModePrefix}Hold`].forEach((holdNoteChip) => {
+                if (!tempCurrCandidateHoldNoteChip) {
+                    const foundChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
+                        currLaneBarChips,
+                        holdNoteChip,
+                        gameModePrefix,
+                        true,
+                        (a, b) => {
+                            return a === b;
+                        }
+                    );
+                    if (foundChip) {
+                        //Match found. Current chip is potentially a hold note chip so we store a reference
+                        tempCurrCandidateHoldNoteChip = foundChip;
+                    } else {
+                        //Not found and no previous candidate hold note so do nothing
+                        console.log("Found candidate for");
+                        console.log(holdNoteChip);
+                        // console.log("in");
+                        // console.log(element);
+                    }
+                } else {
+                    //Invalid condition check: Search for presence of notes before or equal to EndHold Note in current bar too
+                    //Search order must be descending to find the nearest chip, OW the edge case handling will be incorrect!!
+                    const nearestLTEChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
+                        currLaneBarChips,
+                        holdNoteChip,
+                        gameModePrefix,
+                        false,
+                        (a, b) => {
+                            return a <= b;
+                        }
+                    );
+
+                    //Edge case: foundChip may actually be the StartHold chip itself as it can also be in the same bar. We must check for that too, OW false negative
+                    let validEndNoteFound: boolean = false;
+                    if (nearestLTEChip) {
+                        if (
+                            tempCurrCandidateHoldNoteChip &&
+                            nearestLTEChip.lineTimePosition.barNumber ===
+                                tempCurrCandidateHoldNoteChip.lineTimePosition.barNumber &&
+                            nearestLTEChip.lineTimePosition.lineNumberInBar ===
+                                tempCurrCandidateHoldNoteChip.lineTimePosition.lineNumberInBar
+                        ) {
+                            validEndNoteFound = true;
+                        }
+                    } else {
+                        validEndNoteFound = true;
+                    }
+
+                    //Set the endLineTimePosition for current candidate hold note chip
+                    if (validEndNoteFound) {
+                        if (tempCurrCandidateHoldNoteChip) {
+                            tempCurrCandidateHoldNoteChip.endLineTimePosition = {
+                                ...holdNoteChip.lineTimePosition
+                            };
+                        }
+                    } else {
+                        //Match found without candidate. The previous hold note is invalidated, reset findGHoldNoteStart
+                        console.log("Chip before End Hold Note found!");
+                        console.log(nearestLTEChip);
+                    }
+
+                    //Reset for next hold note
+                    tempCurrCandidateHoldNoteChip = undefined;
+                }
+            });
+        }
+
+        //Check for Hold notes invalid condition(s): Presence of notes after StartHold but before EndHold
+        if (tempCurrCandidateHoldNoteChip) {
+            //Set default chip to match and predicate for barIndex > currentCandidateHoldNoteChipForG barNumber
+            //This is a pseudo-chip for purpose of matching only, timePosition is not used
+            let chipToMatch: DTXChip = {
+                lineTimePosition: { barNumber: barIndex, lineNumberInBar: 0, timePosition: 0 },
+                chipCode: "01",
+                laneType: "Bar"
+            };
+            let comparePredicate: (a: number, b: number) => boolean = (a, b) => {
+                return a >= b;
+            }; //Greater than or equal to
+
+            //If barIndex is same bar, change the match chip to the candidate start hold note chip and predicate to strictly greater than to avoid matching itself
+            if (tempCurrCandidateHoldNoteChip.lineTimePosition.barNumber === barIndex) {
+                //Find the first chip later than currentCandidateHoldNoteChip within this bar
+                chipToMatch = tempCurrCandidateHoldNoteChip;
+                comparePredicate = (a, b) => {
+                    return a > b;
+                };
+            }
+
+            const chipAfterStartBeforeEnd = this.searchForGuitarBassChipWithEqualTimePosition(
+                currLaneBarChips,
+                chipToMatch,
+                gameModePrefix,
+                true,
+                comparePredicate
+            );
+
+            if (chipAfterStartBeforeEnd) {
+                //Invalidate current currentCandidateHoldNoteChipForG
+                console.log("Invalid chip found!");
+                console.log(chipAfterStartBeforeEnd);
+                tempCurrCandidateHoldNoteChip = undefined;
+            }
+        }
+
+        return tempCurrCandidateHoldNoteChip;
+    }
+
     private findHoldNotesMatches(laneChipsArray: LaneBarChipsData[]) {
-        let findGHoldNoteStart: boolean = true;
-        let findBHoldNoteStart: boolean = true;
         let currentCandidateHoldNoteChipForG: DTXChip | undefined;
         let currentCandidateHoldNoteChipForB: DTXChip | undefined;
 
@@ -489,233 +615,18 @@ export class DtxFileParser {
         for (let barIndex = 0; barIndex < laneChipsArray.length; barIndex++) {
             const element: LaneBarChipsData = laneChipsArray[barIndex];
 
-            //Find hold notes for Guitar first
-            if (element["GHold"]) {
-                //Usually 1 Start/End Hold note chip in a bar but may have both in the same bar for very short hold notes
-                //Assumes multiple Hold Chips within the same bar is sorted by ascending order!!
-                element["GHold"].forEach((holdNoteChip) => {
-                    if (findGHoldNoteStart) {
-                        const foundChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
-                            element,
-                            holdNoteChip,
-                            "G",
-                            true,
-                            (a, b) => {
-                                return a === b;
-                            }
-                        );
-                        if (foundChip) {
-                            //Match found. Current chip is potentially a hold note chip so we store a reference
-                            currentCandidateHoldNoteChipForG = foundChip;
-                            findGHoldNoteStart = false;
-                        } else {
-                            //Not found and no previous candidate hold note so do nothing
-                            console.log("Found candidate for");
-                            console.log(holdNoteChip);
-                            // console.log("in");
-                            // console.log(element);
-                        }
-                    } else {
-                        //Must search for presence of notes before or equal to EndHold Note in current bar too
-                        //Search order must be descending to find the nearest chip, OW the edge case handling will be incorrect!!
-                        const nearestLTEChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
-                            element,
-                            holdNoteChip,
-                            "G",
-                            false,
-                            (a, b) => {
-                                return a <= b;
-                            }
-                        );
-
-                        //Edge case: foundChip may actually be the StartHold chip itself, so we must check for that too, OW false negative
-                        let validEndNoteFound: boolean = false;
-                        if (nearestLTEChip) {
-                            if (
-                                currentCandidateHoldNoteChipForG &&
-                                nearestLTEChip.lineTimePosition.barNumber ===
-                                    currentCandidateHoldNoteChipForG.lineTimePosition.barNumber &&
-                                nearestLTEChip.lineTimePosition.lineNumberInBar ===
-                                    currentCandidateHoldNoteChipForG.lineTimePosition.lineNumberInBar
-                            ) {
-                                validEndNoteFound = true;
-                            }
-                        } else {
-                            validEndNoteFound = true;
-                        }
-
-                        //Set the endLineTimePosition for current candidate hold note chip
-                        if (validEndNoteFound) {
-                            if (currentCandidateHoldNoteChipForG) {
-                                currentCandidateHoldNoteChipForG.endLineTimePosition = {
-                                    ...holdNoteChip.lineTimePosition
-                                };
-                            }
-                        } else {
-                            //Match found without candidate. The previous hold note is invalidated, reset findGHoldNoteStart
-                            console.log("Chip before End Hold Note found!");
-                            console.log(nearestLTEChip);
-                        }
-
-                        //Reset for next hold note
-                        currentCandidateHoldNoteChipForG = undefined;
-                        findGHoldNoteStart = true;
-                    }
-                });
-            }
-
-            //Check for GHold notes invalid condition(s): Presence of notes after StartHold but before EndHold
-            if (!findGHoldNoteStart && currentCandidateHoldNoteChipForG) {
-                //Set default chip to match and predicate for barIndex > currentCandidateHoldNoteChipForG barNumber
-                //This is a pseudo-chip for purpose of matching only, timePosition is not used
-                let chipToMatch: DTXChip = {
-                    lineTimePosition: { barNumber: barIndex, lineNumberInBar: 0, timePosition: 0 },
-                    chipCode: "01",
-                    laneType: "Bar"
-                };
-                let comparePredicate: (a: number, b: number) => boolean = (a, b) => {
-                    return a >= b;
-                }; //Greater than or equal to
-
-                //If barIndex is same bar, change the match chip to the candidate hold note chip and predicate to strictly greater than
-                if (currentCandidateHoldNoteChipForG.lineTimePosition.barNumber === barIndex) {
-                    //Find the first chip later than currentCandidateHoldNoteChip within this bar
-                    chipToMatch = currentCandidateHoldNoteChipForG;
-                    comparePredicate = (a, b) => {
-                        return a > b;
-                    };
-                }
-
-                const chipAfterStartBeforeEnd = this.searchForGuitarBassChipWithEqualTimePosition(
-                    element,
-                    chipToMatch,
-                    "G",
-                    true,
-                    comparePredicate
-                );
-
-                if (chipAfterStartBeforeEnd) {
-                    //Invalidate current currentCandidateHoldNoteChipForG
-                    console.log("Invalid chip found!");
-                    console.log(chipAfterStartBeforeEnd);
-                    currentCandidateHoldNoteChipForG = undefined;
-                    findGHoldNoteStart = true;
-                }
-            }
-
-            //Find hold notes for Bass in the same manner
-            if (element["BHold"]) {
-                //Usually 1 Start/End Hold note chip in a bar but may have both in the same bar for very short hold notes
-                //Assumes multiple Hold Chips within the same bar is sorted by ascending order!!
-                element["BHold"].forEach((holdNoteChip) => {
-                    if (findBHoldNoteStart) {
-                        const foundChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
-                            element,
-                            holdNoteChip,
-                            "B",
-                            true,
-                            (a, b) => {
-                                return a === b;
-                            }
-                        );
-                        if (foundChip) {
-                            //Match found. Current chip is potentially a hold note chip so we store a reference
-                            currentCandidateHoldNoteChipForB = foundChip;
-                            findBHoldNoteStart = false;
-                        } else {
-                            //Not found and no previous candidate hold note so do nothing
-                            console.log("Found candidate for");
-                            console.log(holdNoteChip);
-                            // console.log("in");
-                            // console.log(element);
-                        }
-                    } else {
-                        //Must search for presence of notes before or equal to EndHold Note in current bar too
-                        //Search order must be descending to find the nearest chip, OW the edge case handling will be incorrect!!
-                        const nearestLTEChip: DTXChip | undefined = this.searchForGuitarBassChipWithEqualTimePosition(
-                            element,
-                            holdNoteChip,
-                            "B",
-                            false,
-                            (a, b) => {
-                                return a <= b;
-                            }
-                        );
-
-                        //Edge case: foundChip may actually be the StartHold chip itself, so we must check for that too, OW false negative
-                        let validEndNoteFound: boolean = false;
-                        if (nearestLTEChip) {
-                            if (
-                                currentCandidateHoldNoteChipForB &&
-                                nearestLTEChip.lineTimePosition.barNumber ===
-                                currentCandidateHoldNoteChipForB.lineTimePosition.barNumber &&
-                                nearestLTEChip.lineTimePosition.lineNumberInBar ===
-                                currentCandidateHoldNoteChipForB.lineTimePosition.lineNumberInBar
-                            ) {
-                                validEndNoteFound = true;
-                            }
-                        } else {
-                            validEndNoteFound = true;
-                        }
-
-                        //Set the endLineTimePosition for current candidate hold note chip
-                        if (validEndNoteFound) {
-                            if (currentCandidateHoldNoteChipForB) {
-                                currentCandidateHoldNoteChipForB.endLineTimePosition = {
-                                    ...holdNoteChip.lineTimePosition
-                                };
-                            }
-                        } else {
-                            //Match found without candidate. The previous hold note is invalidated, reset findBHoldNoteStart
-                            console.log("Chip before End Hold Note found!");
-                            console.log(nearestLTEChip);
-                        }
-
-                        //Reset for next hold note
-                        currentCandidateHoldNoteChipForB = undefined;
-                        findBHoldNoteStart = true;
-                    }
-                });
-            }
-
-            //Check for BHold notes invalid condition(s): Presence of notes after StartHold but before EndHold
-            if (!findBHoldNoteStart && currentCandidateHoldNoteChipForB) {
-                //Set default chip to match and predicate for barIndex > currentCandidateHoldNoteChipForB barNumber
-                //This is a pseudo-chip for purpose of matching only, timePosition is not used
-                let chipToMatch: DTXChip = {
-                    lineTimePosition: { barNumber: barIndex, lineNumberInBar: 0, timePosition: 0 },
-                    chipCode: "01",
-                    laneType: "Bar"
-                };
-                let comparePredicate: (a: number, b: number) => boolean = (a, b) => {
-                    return a >= b;
-                }; //Greater than or equal to
-
-                //If barIndex is same bar, change the match chip to the candidate hold note chip and predicate to strictly greater than
-                if (currentCandidateHoldNoteChipForB.lineTimePosition.barNumber === barIndex) {
-                    //Find the first chip later than currentCandidateHoldNoteChip within this bar
-                    chipToMatch = currentCandidateHoldNoteChipForB;
-                    comparePredicate = (a, b) => {
-                        return a > b;
-                    };
-                }
-
-                const chipAfterStartBeforeEnd = this.searchForGuitarBassChipWithEqualTimePosition(
-                    element,
-                    chipToMatch,
-                    "B",
-                    true,
-                    comparePredicate
-                );
-
-                if (chipAfterStartBeforeEnd) {
-                    //Invalidate current currentCandidateHoldNoteChipForB
-                    console.log("Invalid chip found!");
-                    console.log(chipAfterStartBeforeEnd);
-                    currentCandidateHoldNoteChipForB = undefined;
-                    findBHoldNoteStart = true;
-                }
-            }
+            currentCandidateHoldNoteChipForG = this.processHoldNotesInBar(
+                "G",
+                element,
+                barIndex,
+                currentCandidateHoldNoteChipForG
+            );
+            currentCandidateHoldNoteChipForB = this.processHoldNotesInBar(
+                "B",
+                element,
+                barIndex,
+                currentCandidateHoldNoteChipForB
+            );
         }
     }
 
