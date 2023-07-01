@@ -423,10 +423,16 @@ export class DtxCanvasPositioner {
                 gameMode,
                 chartMode
             );
-
+            
+            //Compute the hold note rects for current hold note chip
             const holdNoteFrameRects: DTXFrameRect[] = this.computeRectsForHoldNotes(chip, gameMode, chartMode);
             holdNoteFrameRects.forEach((holdNoteFrameRect) => {
-                this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push(holdNoteFrameRect.rectPos);
+                //Pass in each rect with the chip laneType to get the actual drawing Rect for hold notes
+                const drawingImageRects: DTXImageRectPos[] = DTXCanvasDrawConfigHelper.convertHoldNoteRectsToDrawingImageRects(holdNoteFrameRect.rectPos, chip.laneType, gameMode, chartMode);
+                drawingImageRects.forEach((drawRect) => {
+                    this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push(drawRect);    
+                });
+                //this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push({name: "RedHold", rectPos: holdNoteFrameRect.rectPos});
             });
 
             //Iterate through the return array of chipPosSize to add multiple drawing chips
@@ -544,7 +550,7 @@ export class DtxCanvasPositioner {
                                 currPixPos.posY < endFramePos.posY ? currPixPos.posY : endFramePos.posY;
                             const rectHeight: number = Math.abs(endFramePos.posY - currPixPos.posY);
                             retRectArray.push({
-                                rectPos: { posX: currPixPos.posX, posY: topLeftPosY, width: 10, height: rectHeight },
+                                rectPos: { posX: currPixPos.posX, posY: topLeftPosY, width: 19, height: rectHeight },
                                 canvasSheetIndex: currPixPos.canvasSheetIndex
                             });
                         }
@@ -583,7 +589,7 @@ export class DtxCanvasPositioner {
             const topLeftPosY: number = startPixPos.posY < endPixPos.posY ? startPixPos.posY : endPixPos.posY;
             const rectHeight: number = Math.abs(endPixPos.posY - startPixPos.posY);
             retRectArray.push({
-                rectPos: { posX: startPixPos.posX, posY: topLeftPosY, width: 10, height: rectHeight },
+                rectPos: { posX: startPixPos.posX, posY: topLeftPosY, width: 19, height: rectHeight },
                 canvasSheetIndex: startPixPos.canvasSheetIndex
             });
         }

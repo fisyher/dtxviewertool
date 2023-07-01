@@ -179,6 +179,40 @@ export default class CanvasDrawing {
                 require("../../assets/images/BassMasterBannerSmall.png")
             )
         );
+        //red_holdrect_test.png is Experimental
+        //Hold Notes
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "RedHold",
+                require("../../assets/images/red_holdrect.png")
+            )
+        );
+        
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "GreenHold",
+                require("../../assets/images/green_holdrect.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "BlueHold",
+                require("../../assets/images/blue_holdrect.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "YellowHold",
+                require("../../assets/images/yellow_holdrect.png")
+            )
+        );
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject(
+                "PinkHold",
+                require("../../assets/images/pink_holdrect.png")
+            )
+        );
+
 
         Promise.all(imageAssetPromises)
             .then((array) => {
@@ -210,14 +244,7 @@ export default class CanvasDrawing {
             const currFrameRect: DTXRect = canvasData.frameRect[index];
 
             this.addRectangle(canvasObject, { ...currFrameRect }, { fill: this.DEFAULT_BACKGROUND_COLOR });
-        }
-
-        //Draw hold notes rect next
-        for (let index = 0; index < canvasData.holdNoteRect.length; index++) {
-            const currHoldNoteRect: DTXRect = canvasData.holdNoteRect[index];
-            
-            this.addRectangle(canvasObject, { ...currHoldNoteRect }, { fill: "yellow" });
-        }
+        }        
 
         //Draw all lines and chips
         for (let index = 0; index < canvasData.chipPositions.length; index++) {
@@ -233,6 +260,14 @@ export default class CanvasDrawing {
                 },
                 element.laneType
             );
+        }
+
+        //Draw hold notes rect next
+        for (let index = 0; index < canvasData.holdNoteRect.length; index++) {
+            const currHoldNoteRect: DTXImageRectPos = canvasData.holdNoteRect[index];
+            
+            this.addImageRect(canvasObject, currHoldNoteRect.rectPos, currHoldNoteRect.name, false, "repeat-y");
+            
         }
 
         //Draw GameMode/Difficulty Image banner
@@ -264,13 +299,13 @@ export default class CanvasDrawing {
         }
     }
 
-    private static addImageRect(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, imageName: string) {
+    private static addImageRect(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, imageName: string, fitImageExactly: boolean = true, repeatPattern: string = "no-repeat") {
         if (CanvasDrawing.CHART_IMAGE_ASSETS[imageName]) {
             const imageElement: HTMLImageElement = CanvasDrawing.CHART_IMAGE_ASSETS[imageName];
 
             const rect = new fabric.Rect({
-                width: imageElement.naturalWidth,
-                height: imageElement.naturalHeight,
+                width: fitImageExactly ? imageElement.naturalWidth : positionSize.width,
+                height: fitImageExactly ? imageElement.naturalHeight : positionSize.height,
                 left: positionSize.posX,
                 top: positionSize.posY
             });
@@ -278,7 +313,7 @@ export default class CanvasDrawing {
                 "fill",
                 new fabric.Pattern({
                     source: imageElement,
-                    repeat: "no-repeat"
+                    repeat: repeatPattern
                 })
             );
 

@@ -1,5 +1,5 @@
 import { matchSingleLineWithRegex } from "../utility/StringFormatMatcher";
-import { ChartModeType, GameModeType } from "./DTXCanvasTypes";
+import { ChartModeType, DTXImageRectPos, DTXRect, GameModeType } from "./DTXCanvasTypes";
 
 interface DTXChipRelativePosSize {
     posX: number;
@@ -150,6 +150,42 @@ class DTXCanvasDrawConfigHelper {
         return retArray;
     }
 
+    public static convertHoldNoteRectsToDrawingImageRects(
+        holdNoteRect: DTXRect,
+        laneCode: string,
+        gameMode: GameModeType,
+        chartMode: ChartModeType
+    ): DTXImageRectPos[] {
+        let retImageRect: DTXImageRectPos[] = [];
+
+        let buttonPressArray: string[] | undefined = this.convertLaneCodeToButtonPressArray(
+            laneCode,
+            gameMode,
+            chartMode
+        );
+
+        if (buttonPressArray) {
+            buttonPressArray.forEach((buttonPress) => {
+                if (buttonPress === "Open" || buttonPress === "OpenV") {
+                    console.error("Hold Note with Open / OpenV press detected and discarded");
+                } else {
+                    const drawingHoldNoteRect: DTXImageRectPos = {
+                        name: `${buttonPress}Hold`,
+                        rectPos: {
+                            posX: holdNoteRect.posX + GUITAR_BASS_CHIP_POS_SIZE_INFO[buttonPress].posX,
+                            posY: holdNoteRect.posY,
+                            width: GUITAR_BASS_CHIP_POS_SIZE_INFO[buttonPress].width,
+                            height: holdNoteRect.height
+                        }
+                    };
+                    retImageRect.push(drawingHoldNoteRect);
+                }
+            });
+        }
+
+        return retImageRect;
+    }
+
     public static getFrameRectRelativePosX(gameMode: GameModeType, chartMode: ChartModeType): number {
         return COMMON_CHIP_POS_SIZE_INFO.Bar.posX;
     }
@@ -198,7 +234,7 @@ class DTXCanvasDrawConfigHelper {
             const numCodeArray: string[] = laneCode.split("").splice(1, 5);
 
             const buttonOrder: string[] =
-                chartMode == "Classic" ? GUITAR_BASS_V_BUTTON_ORDER : GUITAR_BASS_BUTTON_ORDER;
+                chartMode === "Classic" ? GUITAR_BASS_V_BUTTON_ORDER : GUITAR_BASS_BUTTON_ORDER;
 
             const set1 = new Set();
             for (let index = 0; index < numCodeArray.length; index++) {
@@ -215,7 +251,7 @@ class DTXCanvasDrawConfigHelper {
 
             //If still empty, means 00000 i.e. OPEN
             if (retButtonPressArray.length === 0) {
-                retButtonPressArray.push(chartMode == "Classic" ? "OpenV" : "Open");
+                retButtonPressArray.push(chartMode === "Classic" ? "OpenV" : "Open");
             }
 
             return retButtonPressArray;
