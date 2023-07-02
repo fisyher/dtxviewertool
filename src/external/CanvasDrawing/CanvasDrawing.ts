@@ -107,9 +107,7 @@ export default class CanvasDrawing {
         );
 
         //Guitar/Bass assets
-        imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject("Red", require("../../assets/images/red_gfchip.png"))
-        );
+        imageAssetPromises.push(CanvasDrawing.loadImageAsObject("Red", require("../../assets/images/red_gfchip.png")));
         imageAssetPromises.push(
             CanvasDrawing.loadImageAsObject("Green", require("../../assets/images/green_gfchip.png"))
         );
@@ -119,9 +117,7 @@ export default class CanvasDrawing {
         imageAssetPromises.push(
             CanvasDrawing.loadImageAsObject("Yellow", require("../../assets/images/yellow_gfchip.png"))
         );
-        imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject("Pink", require("../../assets/images/mag_gfchip.png"))
-        );
+        imageAssetPromises.push(CanvasDrawing.loadImageAsObject("Pink", require("../../assets/images/mag_gfchip.png")));
         imageAssetPromises.push(
             CanvasDrawing.loadImageAsObject("Wail", require("../../assets/images/wail_gfchip.png"))
         );
@@ -182,37 +178,20 @@ export default class CanvasDrawing {
         //red_holdrect_test.png is Experimental
         //Hold Notes
         imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject(
-                "RedHold",
-                require("../../assets/images/red_holdrect.png")
-            )
-        );
-        
-        imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject(
-                "GreenHold",
-                require("../../assets/images/green_holdrect.png")
-            )
+            CanvasDrawing.loadImageAsObject("RedHold", require("../../assets/images/red_holdrect_test2.png"))
         );
         imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject(
-                "BlueHold",
-                require("../../assets/images/blue_holdrect.png")
-            )
+            CanvasDrawing.loadImageAsObject("GreenHold", require("../../assets/images/green_holdrect_test2.png"))
         );
         imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject(
-                "YellowHold",
-                require("../../assets/images/yellow_holdrect.png")
-            )
+            CanvasDrawing.loadImageAsObject("BlueHold", require("../../assets/images/blue_holdrect_test2.png"))
         );
         imageAssetPromises.push(
-            CanvasDrawing.loadImageAsObject(
-                "PinkHold",
-                require("../../assets/images/pink_holdrect.png")
-            )
+            CanvasDrawing.loadImageAsObject("YellowHold", require("../../assets/images/yellow_holdrect_test2.png"))
         );
-
+        imageAssetPromises.push(
+            CanvasDrawing.loadImageAsObject("PinkHold", require("../../assets/images/pink_holdrect_test2.png"))
+        );
 
         Promise.all(imageAssetPromises)
             .then((array) => {
@@ -244,7 +223,7 @@ export default class CanvasDrawing {
             const currFrameRect: DTXRect = canvasData.frameRect[index];
 
             this.addRectangle(canvasObject, { ...currFrameRect }, { fill: this.DEFAULT_BACKGROUND_COLOR });
-        }        
+        }
 
         //Draw all lines and chips
         for (let index = 0; index < canvasData.chipPositions.length; index++) {
@@ -265,9 +244,8 @@ export default class CanvasDrawing {
         //Draw hold notes rect next
         for (let index = 0; index < canvasData.holdNoteRect.length; index++) {
             const currHoldNoteRect: DTXImageRectPos = canvasData.holdNoteRect[index];
-            
+
             this.addImageRect(canvasObject, currHoldNoteRect.rectPos, currHoldNoteRect.name, false, "repeat-y");
-            
         }
 
         //Draw GameMode/Difficulty Image banner
@@ -299,7 +277,14 @@ export default class CanvasDrawing {
         }
     }
 
-    private static addImageRect(canvasObject: fabric.StaticCanvas, positionSize: DTXRect, imageName: string, fitImageExactly: boolean = true, repeatPattern: string = "no-repeat") {
+    private static addImageRect(
+        canvasObject: fabric.StaticCanvas,
+        positionSize: DTXRect,
+        imageName: string,
+        fitImageExactly: boolean = true,
+        repeatPattern: string = "no-repeat",
+        opacity: number = 1.0
+    ) {
         if (CanvasDrawing.CHART_IMAGE_ASSETS[imageName]) {
             const imageElement: HTMLImageElement = CanvasDrawing.CHART_IMAGE_ASSETS[imageName];
 
@@ -307,7 +292,8 @@ export default class CanvasDrawing {
                 width: fitImageExactly ? imageElement.naturalWidth : positionSize.width,
                 height: fitImageExactly ? imageElement.naturalHeight : positionSize.height,
                 left: positionSize.posX,
-                top: positionSize.posY
+                top: positionSize.posY,
+                opacity: opacity
             });
             rect.set(
                 "fill",
