@@ -13,6 +13,7 @@ import {
 } from "../../app/reducers/optionsReducer";
 import { ChartModeType, ChartModes, DifficultyLabelType, DifficultyLabels } from "../../external/DTX/DTXCanvasTypes";
 import { reset as resetCanvasEngine } from "../../app/reducers/canvasEngineReducer";
+import FileInput from "../FileInput";
 
 const ScaleOptions: number[] = [0.5, 1.0, 1.5, 2.0];
 const HeightOptions: number[] = [2000, 2500, 3000, 3500, 4000];
@@ -26,27 +27,9 @@ const DTXLoadConfigPanel: React.FC = () => {
         (state) => state.UIOptions.loadConfigUI
     );
 
-    //
-    // useEffect(() => {
-    //   if (status !== previousStatusRef.current) {
-    //     // Dispatch your action here conditionally
-    //     console.log("Change in status detected");
-    //     console.log(previousStatusRef.current + " to " + status);
-    //     if (status === "rawLoaded") {
-    //       console.log("Dispatch action to parseFile");
-    //       dispatch(parseFile(raw));
-    //     }
-    //   }
-
-    //   // Update the reference to the current nestedField value
-    //   previousStatusRef.current = status;
-    // }, [status, raw, dispatch]);
-
     //Handle file change event
-    const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
+    const handleFileChange = (file: File) => {
         if (file) {
-            //
             dispatch(resetCanvasEngine());
             dispatch(resetDTXJson());
             dispatch(readFile(file));
@@ -85,7 +68,7 @@ const DTXLoadConfigPanel: React.FC = () => {
                 Load DTX File
             </Typography>
             <div>
-                <input type="file" accept=".dtx, .gda" onChange={handleFileChange} />
+                <FileInput onChange={handleFileChange} accept=".dtx, .gda"></FileInput>
                 {status === "loading" && <p>Loading file...</p>}
             </div>
             <Button onClick={handleResetClickEvent}>Reset</Button>
