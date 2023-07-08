@@ -14,6 +14,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [16.x]
+        
     steps:
     - uses: actions/checkout@v3
 
@@ -22,10 +27,14 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    - name: Install
+      run: |
+        yarn install
+        
     - name: Build
       run: |
-        npm install
-        npm run build
+        yarn clean
+        yarn build
     
     - name: Deploy to GH Pages
       if: ${{ github.event_name != 'pull_request' }}
