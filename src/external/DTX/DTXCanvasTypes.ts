@@ -91,4 +91,4 @@ export type {
     DTXImageRectPos,
     GameModeType    
 };
-export { ChartModes, DifficultyLabels };
+export { ChartModes, GameModes, DifficultyLabels };

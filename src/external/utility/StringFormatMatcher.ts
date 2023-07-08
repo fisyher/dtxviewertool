@@ -11,9 +11,9 @@ const matchSingleLineWithRegex = (line: string, regex: RegExp): boolean => {
         }
 
         // The result can be accessed through the `m`-variable.
-        matches.forEach((match, groupIndex) => {
+        if(matches.length > 0){
             matchFound = true;
-        });
+        }
 
         // Only need the first match, so break out to skip necessary regex search
         if(matchFound){

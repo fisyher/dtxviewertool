@@ -1,6 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import React, { ChangeEvent } from "react";
+import React from "react";
 import { useAppSelector, useAppDispatch } from "../../app/hooks";
 import { ChartState, readFile, reset as resetDTXJson } from "../../app/reducers/chartReducer";
 import { Button, FormControl, Grid, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";

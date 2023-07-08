@@ -39,8 +39,10 @@ const TITLE_TAG: string = "#TITLE";
 const LINES_IN_1_BAR: number = 192;
 
 // Lane Codes to extract
+const CommonLaneCodeMapping: LaneCodeRemap[] = [{ code: ["01"], name: "BGM" }];
+
+//DTX Mappings
 /**
- * BGM
  * LeftCrashCymbal
  * Hi-Hat
  * Snare
@@ -52,26 +54,6 @@ const LINES_IN_1_BAR: number = 192;
  * RightCrashCymbal
  * RideCymbal
  */
-const LANE_CODES_ARRAY: LaneCodeRemap[] = [
-    //Common
-    { code: ["01"], name: "BGM" },
-    //Drum
-    { code: ["1A"], name: "LeftCrashCymbal" },
-    { code: ["11", "18"], name: "Hi-Hat" },
-    { code: ["12"], name: "Snare" },
-    { code: ["1B", "1C"], name: "LeftBassPedal" },
-    { code: ["14"], name: "Hi-Tom" },
-    { code: ["13"], name: "RightBassPedal" },
-    { code: ["15"], name: "Low-Tom" },
-    { code: ["17"], name: "Floor-Tom" },
-    { code: ["16"], name: "RightCrashCymbal" },
-    { code: ["19"], name: "RideCymbal" }
-    //Guitar
-];
-
-const CommonLaneCodeMapping: LaneCodeRemap[] = [{ code: ["01"], name: "BGM" }];
-
-//DTX Mappings
 const DTXLaneCodeMappingForDrum: LaneCodeRemap[] = [
     { code: ["1A"], name: "LeftCrashCymbal" },
     { code: ["11", "18"], name: "Hi-Hat" },
@@ -196,12 +178,12 @@ const GDALaneCodeMappingForBass: LaneCodeRemap[] = [
     { code: ["BW"], name: "BWail" }
 ];
 
-const SUPPORTED_HEADERS = [
-    "; Created by DTXCreator 024",
-    "; Created by DTXCreator 025(verK)",
-    "; Created by DTXCreator 020",
-    "; Created by DTXCreatorAL 008"
-];
+// const SUPPORTED_HEADERS = [
+//     "; Created by DTXCreator 024",
+//     "; Created by DTXCreator 025(verK)",
+//     "; Created by DTXCreator 020",
+//     "; Created by DTXCreatorAL 008"
+// ];
 
 export class DtxFileParser {
     private path: string = "";
@@ -1014,7 +996,7 @@ export class DtxFileParser {
                     startBpm = parseFloat(bpmValue[1]);
                 }
             } else {
-                throw "Match not found!";
+                throw new Error("Match not found!");
             }
 
             //Default bpm is equivalent to a bpmMarker at bar:0 line:0
