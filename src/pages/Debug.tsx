@@ -108,6 +108,7 @@ function Debug() {
                     </Box>
                 </Box>
             </Container>
+            {/*Common Footer*/}
             <PageFooter></PageFooter>
             </Box>
         </React.Fragment>
