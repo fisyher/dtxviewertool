@@ -8,7 +8,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 function App() {
     return (
-        <BrowserRouter>
+        <BrowserRouter basename={process.env.PUBLIC_URL}>
             <CustomNavBar></CustomNavBar>
             <Container maxWidth={false}>
                 {/*Start of Content body*/}
