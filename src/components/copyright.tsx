@@ -2,8 +2,8 @@ import { Box, Link, Typography } from "@mui/material";
 
 function Copyright() {
     return (
-        <Box component="footer">
-            <Typography variant="body2" color="text.secondary" align="center">
+        
+            <Typography variant="body2" color="text.secondary">
                 {"Copyright © "}
                 <Link color="inherit" href="/">
                     DTX Viewer Tool
@@ -11,7 +11,7 @@ function Copyright() {
                 {new Date().getFullYear()}
                 {"."}
             </Typography>
-        </Box>
+        
     );
 }
 
