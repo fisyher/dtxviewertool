@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
-import { Paper } from "@mui/material";
 
 interface FabricCanvasProps {
     id: string;
@@ -24,13 +23,13 @@ const FabricCanvas: React.FC<FabricCanvasProps> = ({ id, drawFunction, canvasPro
         );
 
         return () => {
-            if (!elementRef.current) {
+            if (!elementRef.current) { // eslint-disable-line react-hooks/exhaustive-deps
                 console.log("dispose canvas object");
                 canvasObject?.dispose();
                 setCanvasObject(null);
             }
         };
-    }, [canvasProps, id]);
+    }, [canvasProps, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         drawFunction(canvasObject, sourceObjectIndex);

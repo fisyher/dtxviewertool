@@ -21,7 +21,7 @@ const Viewer: React.FC = () => {
 
     const dispatch = useAppDispatch();
     const previousStatusRef = useRef<ChartStatusType>();
-    const { status, error, raw, dtxJsonObject }: ChartState = useAppSelector((state) => state.chart);
+    const { status, raw, dtxJsonObject }: ChartState = useAppSelector((state) => state.chart);
 
     const { difficultyLabel, scale, chartMode, maxHeight }: LoadConfigOptionType = useAppSelector<LoadConfigOptionType>(
         (state) => state.UIOptions.loadConfigUI

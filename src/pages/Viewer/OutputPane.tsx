@@ -1,4 +1,4 @@
-import { Paper, Typography, Box, Tabs, Tab, Card } from "@mui/material";
+import { Paper, Typography, Tabs, Tab, Card } from "@mui/material";
 import FabricCanvas from "../../components/FabricCanvas/FabricCanvas";
 import { CanvasChartState, CanvasEngineOverallState } from "../../app/reducers/canvasEngineReducer";
 import { useAppSelector } from "../../app/hooks";
@@ -24,7 +24,7 @@ const useDTXCanvasHook = (inputChartState: CanvasChartState, prefix: string) => 
 
     const fabricComponents = useMemo(() => {
         let retComponents: ReactNode = <Typography variant="h5">Load a DTX File to start</Typography>;
-        
+
         if (inputChartState.status === "loaded") {
             retComponents = inputChartState.canvasDTXObjects.map((canvasDTXObject, index) => {
                 return (
@@ -41,13 +41,13 @@ const useDTXCanvasHook = (inputChartState: CanvasChartState, prefix: string) => 
             //console.log("in useMemo: status is " + Drum.status);
         }
         return retComponents;
-    }, [inputChartState, prefix]);
+    }, [inputChartState, prefix, drawCanvasFunction]);
 
     return [fabricComponents];
 };
 
 const OutputPane: React.FC = () => {
-    const { Drum, Guitar, Bass, overallStatus }: CanvasEngineOverallState = useAppSelector((state) => state.canvasDTX);
+    const { Drum, Guitar, Bass }: CanvasEngineOverallState = useAppSelector((state) => state.canvasDTX);
 
     const [tabValue, setTabValue] = useState<number>(0);
 
