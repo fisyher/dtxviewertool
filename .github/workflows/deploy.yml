@@ -33,7 +33,6 @@ jobs:
         
     - name: Build
       run: |
-        yarn clean
         yarn build
     
     - name: Deploy to GH Pages
