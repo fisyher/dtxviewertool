@@ -1,6 +1,5 @@
 {
   "files": {
-    "main.css": "/static/css/main.abd64e84.css",
     "main.js": "/static/js/main.87234325.js",
     "static/media/GuitarAdvancedBannerSmall.png": "/static/media/GuitarAdvancedBannerSmall.c6e79289daef000f1a93.png",
     "static/media/BassAdvancedBannerSmall.png": "/static/media/BassAdvancedBannerSmall.63ad87d015b6592ddd83.png",
@@ -15,11 +14,9 @@
     "static/media/BassBasicBannerSmall.png": "/static/media/BassBasicBannerSmall.4ad4cb72bd8a37a71b7b.png",
     "static/media/DrumBasicBannerSmall.png": "/static/media/DrumBasicBannerSmall.d7e22d2bbb0375f11bba.png",
     "index.html": "/index.html",
-    "main.abd64e84.css.map": "/static/css/main.abd64e84.css.map",
     "main.87234325.js.map": "/static/js/main.87234325.js.map"
   },
   "entrypoints": [
-    "static/css/main.abd64e84.css",
     "static/js/main.87234325.js"
   ]
 }
