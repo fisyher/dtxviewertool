@@ -46,13 +46,14 @@ const DM_CHIP_POS_SIZE_INFO: DTXCanvasLaneToChipRelativePosSize = {
 
 const GUITAR_BASS_CHIP_POS_SIZE_INFO: DTXCanvasLaneToChipRelativePosSize = {
     Red: { posX: 60, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
-    Green: { posX: 78, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
-    Blue: { posX: 96, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
-    Yellow: { posX: 114, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
-    Pink: { posX: 132, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
+    Green: { posX: 79, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
+    Blue: { posX: 98, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
+    Yellow: { posX: 117, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
+    Pink: { posX: 136, width: DEFAULT_CHIP_WIDTH + 1, height: DEFAULT_CHIP_HEIGHT },
     Open: { posX: 60, width: (DEFAULT_CHIP_WIDTH + 1) * 5, height: DEFAULT_CHIP_HEIGHT },
     OpenV: { posX: 60, width: (DEFAULT_CHIP_WIDTH + 1) * 3, height: DEFAULT_CHIP_HEIGHT },
-    Wail: { posX: 155, width: 15, height: 19 }
+    Wail: { posX: 155, width: 15, height: 19 },
+    WailV: { posX: 117, width: 15, height: 19 }
 };
 
 const GUITAR_BASS_BUTTON_ORDER: string[] = ["Red", "Green", "Blue", "Yellow", "Pink"];
@@ -120,12 +121,12 @@ class DTXCanvasDrawConfigHelper {
                 if (laneCode === "GWail" && gameMode === "Guitar") {
                     retArray.push({
                         drawingLane: "Wail",
-                        chipRelativePosSize: GUITAR_BASS_CHIP_POS_SIZE_INFO["Wail"]
+                        chipRelativePosSize: GUITAR_BASS_CHIP_POS_SIZE_INFO[chartMode === "Classic" ? "WailV" : "Wail"]
                     });
                 } else if (laneCode === "BWail" && gameMode === "Bass") {
                     retArray.push({
                         drawingLane: "Wail",
-                        chipRelativePosSize: GUITAR_BASS_CHIP_POS_SIZE_INFO["Wail"]
+                        chipRelativePosSize: GUITAR_BASS_CHIP_POS_SIZE_INFO[chartMode === "Classic" ? "WailV" : "Wail"]
                     });
                 } else {
                     let buttonPressArray: string[] | undefined = this.convertLaneCodeToButtonPressArray(
@@ -199,6 +200,9 @@ class DTXCanvasDrawConfigHelper {
             }
         } else {
             retWidth = (DEFAULT_CHIP_WIDTH + 1) * 5 + GUITAR_BASS_CHIP_POS_SIZE_INFO.Wail.width;
+            if (chartMode === "Classic") {
+                retWidth = (DEFAULT_CHIP_WIDTH + 1) * 3 + GUITAR_BASS_CHIP_POS_SIZE_INFO.Wail.width;
+            }
         }
         return retWidth;
     }
