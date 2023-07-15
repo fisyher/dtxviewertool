@@ -1,4 +1,4 @@
-import DTXJson, { DTXBar, DTXBpmSegment, DTXChip, DTXLine } from "./DTXJsonTypes";
+import DTXJson, { DTXBar, DTXBpmSegment, DTXChip, DTXLine, DTXSegment } from "./DTXJsonTypes";
 import {
     DTXRect,
     DTXChipPixelRectPos,
@@ -310,18 +310,22 @@ export class DtxCanvasPositioner {
                 chartMode
             );
 
-            //Bar Line
-            const chipPixelPos: DTXChipPixelRectPos = {
-                laneType: "Bar",
-                rectPos: {
-                    posX:
-                        chipLinePosInCanvas.posX +
-                        DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
-                    posY: chipLinePosInCanvas.posY,
-                    width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
-                    height: DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("Bar")?.height as number
-                }
-            };
+            //Check if barLine is within a Hide Lines segment
+            if (!this.checkTimePositionWithinSegments(barInfo.startTimePos, dtxJson.hideLinesSegments)) {
+                //Bar Line
+                const chipPixelPos: DTXChipPixelRectPos = {
+                    laneType: "Bar",
+                    rectPos: {
+                        posX:
+                            chipLinePosInCanvas.posX +
+                            DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
+                        posY: chipLinePosInCanvas.posY,
+                        width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
+                        height: DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("Bar")?.height as number
+                    }
+                };
+                this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+            }
 
             //Bar Number
             const textPos: DTXTextRectPos = {
@@ -342,7 +346,6 @@ export class DtxCanvasPositioner {
                 text: convertNumberToFormattedText(index, 3)
             };
 
-            this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
             this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].textPositions.push(textPos);
         }
 
@@ -356,20 +359,23 @@ export class DtxCanvasPositioner {
                 chartMode
             );
 
-            //Bar Line
-            const chipPixelPos: DTXChipPixelRectPos = {
-                laneType: "QuarterBar",
-                rectPos: {
-                    posX:
-                        chipLinePosInCanvas.posX +
-                        DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
-                    posY: chipLinePosInCanvas.posY,
-                    width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
-                    height: DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("QuarterBar")?.height as number
-                }
-            };
+            //Check if the quarterBarLine is within a Hide Lines segment
+            if (!this.checkTimePositionWithinSegments(quarterBarLine.timePosition, dtxJson.hideLinesSegments)) {
+                //Create QuarterBar Line
+                const chipPixelPos: DTXChipPixelRectPos = {
+                    laneType: "QuarterBar",
+                    rectPos: {
+                        posX:
+                            chipLinePosInCanvas.posX +
+                            DTXCanvasDrawConfigHelper.getFrameRectRelativePosX(gameMode, chartMode),
+                        posY: chipLinePosInCanvas.posY,
+                        width: DTXCanvasDrawConfigHelper.getFrameRectWidth(gameMode, chartMode),
+                        height: DTXCanvasDrawConfigHelper.getCommonChipRelativePosSize("QuarterBar")?.height as number
+                    }
+                };
 
-            this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+                this.canvasDTXObjects[chipLinePosInCanvas.canvasSheetIndex].chipPositions.push(chipPixelPos);
+            }
         }
 
         //Compute for BPM change marker
@@ -423,14 +429,20 @@ export class DtxCanvasPositioner {
                 gameMode,
                 chartMode
             );
-            
+
             //Compute the hold note rects for current hold note chip
             const holdNoteFrameRects: DTXFrameRect[] = this.computeRectsForHoldNotes(chip, gameMode, chartMode);
             holdNoteFrameRects.forEach((holdNoteFrameRect) => {
                 //Pass in each rect with the chip laneType to get the actual drawing Rect for hold notes
-                const drawingImageRects: DTXImageRectPos[] = DTXCanvasDrawConfigHelper.convertHoldNoteRectsToDrawingImageRects(holdNoteFrameRect.rectPos, chip.laneType, gameMode, chartMode);
+                const drawingImageRects: DTXImageRectPos[] =
+                    DTXCanvasDrawConfigHelper.convertHoldNoteRectsToDrawingImageRects(
+                        holdNoteFrameRect.rectPos,
+                        chip.laneType,
+                        gameMode,
+                        chartMode
+                    );
                 drawingImageRects.forEach((drawRect) => {
-                    this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push(drawRect);    
+                    this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push(drawRect);
                 });
                 //this.canvasDTXObjects[holdNoteFrameRect.canvasSheetIndex].holdNoteRect.push({name: "RedHold", rectPos: holdNoteFrameRect.rectPos});
             });
@@ -479,6 +491,22 @@ export class DtxCanvasPositioner {
 
         this.canvasDTXObjects[endLinePosInCanvas.canvasSheetIndex].chipPositions.push(endLinePixelPos);
         // return retResult;
+    }
+
+    private checkTimePositionWithinSegments(timePosition: number, segments: DTXSegment[]): boolean {
+        let result: boolean = false;
+
+        for (let index = 0; index < segments.length; index++) {
+            const currSegment = segments[index];
+            if (
+                timePosition >= currSegment.startTimePos &&
+                timePosition < currSegment.startTimePos + currSegment.duration
+            ) {
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 
     private computeRectsForHoldNotes(
