@@ -74,6 +74,13 @@ interface DTXBpmSegment {
     duration: number;
 }
 
+interface DTXSegment {
+    startBarNum: number;
+    startLineNum: number;
+    startTimePos: number;
+    duration: number;
+}
+
 interface DTXLine {
     barNumber: number;
     lineNumberInBar: number;
@@ -98,6 +105,7 @@ interface DTXJson {
     bars: Array<DTXBar>;
     quarterBarLines: Array<DTXLine>;
     bpmSegments: Array<DTXBpmSegment>;
+    hideLinesSegments: Array<DTXSegment>;
     laneChipCounter: DTXLaneChipCounter;
 }
 
@@ -118,9 +126,10 @@ const EmptyDTXJson: DTXJson = {
     quarterBarLines: [],
     bpmSegments: [],
     chips: [],
+    hideLinesSegments: [],
     laneChipCounter: {}
 };
 
-export type { DTXBar, DTXBpmSegment, DTXChip, DTXLine, DTXSongInfoType, DTXMetaDataType, DTXFileType };
+export type { DTXBar, DTXBpmSegment, DTXSegment, DTXChip, DTXLine, DTXSongInfoType, DTXMetaDataType, DTXFileType };
 export { EmptyDTXJson };
 export default DTXJson;

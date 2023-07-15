@@ -1,5 +1,5 @@
 import { matchSingleLineWithRegex } from "../utility/StringFormatMatcher";
-import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson, DTXLine, DTXFileType } from "./DTXJsonTypes";
+import { DTXChip, DTXBar, DTXBpmSegment, EmptyDTXJson, DTXLine, DTXFileType, DTXSegment } from "./DTXJsonTypes";
 import DTXJson from "./DTXJsonTypes";
 
 //Intermediate interfaces
@@ -22,6 +22,12 @@ interface BarLaneItem {
 
 interface BpmMarker {
     bpm: number;
+    barNum: number;
+    lineNum: number;
+}
+
+interface ShowHideLineMarker {
+    show: boolean;
     barNum: number;
     lineNum: number;
 }
@@ -277,6 +283,10 @@ export class DtxFileParser {
 
             this.laneBarChipsArray = this.extractAndCreateLaneChipsArray(content);
 
+            //Extract Show Hide Markers and create HideLinesSegment Array
+            const showHideMarkers: ShowHideLineMarker[] = this.extractShowHideLineMarkers(content, this.barLengths);
+            this.finalJson.hideLinesSegments = this.createHideLinesSegments(showHideMarkers, songDuration);
+
             //Find Hold note matches for Guitar and Bass
             this.findHoldNotesMatches(this.laneBarChipsArray);
 
@@ -494,10 +504,10 @@ export class DtxFileParser {
                     if (foundChip) {
                         //Match found.
                         //Further check that this is not an Open Note before accepting the match
-                        if(foundChip.laneType !== `${gameModePrefix}00000`){
+                        if (foundChip.laneType !== `${gameModePrefix}00000`) {
                             //Current chip is potentially a hold note chip so we store a reference
                             tempCurrCandidateHoldNoteChip = foundChip;
-                        }                         
+                        }
                     } else {
                         //Not found and no previous candidate hold note so do nothing
                         console.log("Found candidate for");
@@ -598,7 +608,6 @@ export class DtxFileParser {
         let currentCandidateHoldNoteChipForG: DTXChip | undefined;
         let currentCandidateHoldNoteChipForB: DTXChip | undefined;
 
-        
         for (let barIndex = 0; barIndex < laneChipsArray.length; barIndex++) {
             const element: LaneBarChipsData = laneChipsArray[barIndex];
 
@@ -723,6 +732,56 @@ export class DtxFileParser {
                     lineNumberInBar: currLineNumber,
                     timePosition: this.calculateAbsoluteTime(index, currLineNumber)
                 });
+            }
+        }
+
+        return retArray;
+    }
+
+    private createHideLinesSegments(showHideLineMarkers: ShowHideLineMarker[], songDuration: number): DTXSegment[] {
+        let retArray: DTXSegment[] =[];
+
+        /*
+        We are interested in only segments where Beat/Bar lines are set to be hidden
+        By default, these lines are always shown.
+        */
+
+        let currSegmentIndex: number = -1;
+        for (let index = 0; index < showHideLineMarkers.length; index++) {
+            const currShowHideLineMarker = showHideLineMarkers[index];
+            
+            if(!currShowHideLineMarker.show){
+                if(currSegmentIndex === -1){
+                    const newSegment: DTXSegment = {
+                        startBarNum: currShowHideLineMarker.barNum,
+                        startLineNum: currShowHideLineMarker.lineNum,
+                        startTimePos: this.calculateAbsoluteTime(currShowHideLineMarker.barNum, currShowHideLineMarker.lineNum),
+                        duration: 0 //To be updated later
+                    };
+                    retArray.push(newSegment);
+                    currSegmentIndex = retArray.length - 1;
+                }                
+            }
+            else{
+                if(currSegmentIndex >= 0 && currSegmentIndex < retArray.length){
+                    const showLinesTimePosition: number = this.calculateAbsoluteTime(currShowHideLineMarker.barNum, currShowHideLineMarker.lineNum);
+
+                    //Update current segment duration
+                    retArray[currSegmentIndex].duration = showLinesTimePosition - retArray[currSegmentIndex].startTimePos;
+
+                    //Reset currSegmentIndex for next segment if any
+                    currSegmentIndex = -1;
+                }
+
+            }
+        }
+
+        //Check if final segment needs its duration to be updated
+        //This occurs when the last ShowHideMarker is a hide marker
+        if(retArray.length > 0){
+            const lastSegment = retArray[retArray.length - 1];
+            if(lastSegment.duration === 0){
+                lastSegment.duration = songDuration - lastSegment.startTimePos;
             }
         }
 
@@ -986,93 +1045,143 @@ export class DtxFileParser {
     private extractBpmMarkers(dtxContent: string, barLengths: number[]): BpmMarker[] {
         let bpmMarkerArray: BpmMarker[] = [];
 
-        try {
-            //Get the initial BPM value from metadata
-            let matchResult = dtxContent.match(/#BPM:? \S*/);
-            let startBpm: number = 0;
-            if (matchResult) {
-                let bpmValue = this.splitIntoKeyValuePair(matchResult[0]);
-                if (bpmValue) {
-                    startBpm = parseFloat(bpmValue[1]);
-                }
-            } else {
-                throw new Error("Match not found!");
+        //Get the initial BPM value from metadata
+        let matchResult = dtxContent.match(/#BPM:? \S*/);
+        let startBpm: number = 0;
+        if (matchResult) {
+            let bpmValue = this.splitIntoKeyValuePair(matchResult[0]);
+            if (bpmValue) {
+                startBpm = parseFloat(bpmValue[1]);
             }
+        } else {
+            throw new Error("Match not found!");
+        }
 
-            //Default bpm is equivalent to a bpmMarker at bar:0 line:0
-            bpmMarkerArray.push({
-                bpm: startBpm,
-                barNum: 0,
-                lineNum: 0
-            });
+        //Default bpm is equivalent to a bpmMarker at bar:0 line:0
+        bpmMarkerArray.push({
+            bpm: startBpm,
+            barNum: 0,
+            lineNum: 0
+        });
 
-            //BPM marker data
-            let regExpBPMMarker: RegExp = new RegExp(/#BPM[A-Z0-9]{2}:? \S*/g);
-            let BPMMarker_matchResults = [];
-            while ((matchResult = regExpBPMMarker.exec(dtxContent)) != null) {
-                BPMMarker_matchResults.push(matchResult);
-            }
+        //BPM marker data
+        let regExpBPMMarker: RegExp = new RegExp(/#BPM[A-Z0-9]{2}:? \S*/g);
+        let BPMMarker_matchResults = [];
+        while ((matchResult = regExpBPMMarker.exec(dtxContent)) != null) {
+            BPMMarker_matchResults.push(matchResult);
+        }
 
-            /**
+        /**
              * Create the bpmLabelMap
              * #BPM02: 80
                 #BPM03: 160
                 #BPM04: 144
              */
-            if (BPMMarker_matchResults.length > 0) {
-                let bpmLabelMap: any = {};
-                BPMMarker_matchResults.forEach((element) => {
-                    let bpmLabelValue = this.splitIntoKeyValuePair(element[0]);
-                    if (bpmLabelValue) {
-                        let label: string = bpmLabelValue[0].substring(4, 6);
-                        let bpmValue: Number = parseFloat(bpmLabelValue[1]);
-                        //console.log('bpm value is ', bpmValue)
-                        bpmLabelMap[label] = bpmValue;
-                    }
-                });
-
-                //BPM Lane data
-                //Barlength related: Match only lane 08
-                let matchResult = null;
-                let BPMLane_matchResults = [];
-
-                let regExpBarLength: RegExp = new RegExp(/#\d{3}08:? \S*/g);
-                while ((matchResult = regExpBarLength.exec(dtxContent)) != null) {
-                    BPMLane_matchResults.push(matchResult);
+        if (BPMMarker_matchResults.length > 0) {
+            let bpmLabelMap: any = {};
+            BPMMarker_matchResults.forEach((element) => {
+                let bpmLabelValue = this.splitIntoKeyValuePair(element[0]);
+                if (bpmLabelValue) {
+                    let label: string = bpmLabelValue[0].substring(4, 6);
+                    let bpmValue: Number = parseFloat(bpmLabelValue[1]);
+                    //console.log('bpm value is ', bpmValue)
+                    bpmLabelMap[label] = bpmValue;
                 }
+            });
 
-                BPMLane_matchResults.forEach((element) => {
-                    let BPMLaneBarItem: BarLaneItem | null = this.decodeLineData(element[0]);
-                    if (BPMLaneBarItem) {
-                        let currBarLength: number = barLengths[BPMLaneBarItem.barNum];
-                        let currBarBPMMarkerChipsArray: ChipItem[] = this.decodeBarItem(
-                            BPMLaneBarItem.value,
-                            currBarLength,
-                            BPMLaneBarItem.barNum
-                        );
+            //BPM Lane data
+            //Barlength related: Match only lane 08
+            let matchResult = null;
+            let BPMLane_matchResults = [];
 
-                        for (let index = 0; index < currBarBPMMarkerChipsArray.length; index++) {
-                            const element = currBarBPMMarkerChipsArray[index];
-                            if (element.barNum === 0 && element.lineNum === 0) {
-                                //Overwrite default if a bpm marker is found at bar 0 and line 0
-                                bpmMarkerArray[0].bpm = bpmLabelMap[element.chipCode] as number;
-                            } else {
-                                bpmMarkerArray.push({
-                                    bpm: bpmLabelMap[element.chipCode] as number,
-                                    barNum: element.barNum,
-                                    lineNum: element.lineNum
-                                });
-                            }
+            let regExpBarLength: RegExp = new RegExp(/#\d{3}08:? \S*/g);
+            while ((matchResult = regExpBarLength.exec(dtxContent)) != null) {
+                BPMLane_matchResults.push(matchResult);
+            }
+
+            BPMLane_matchResults.forEach((element) => {
+                let BPMLaneBarItem: BarLaneItem | null = this.decodeLineData(element[0]);
+                if (BPMLaneBarItem) {
+                    let currBarLength: number = barLengths[BPMLaneBarItem.barNum];
+                    let currBarBPMMarkerChipsArray: ChipItem[] = this.decodeBarItem(
+                        BPMLaneBarItem.value,
+                        currBarLength,
+                        BPMLaneBarItem.barNum
+                    );
+
+                    for (let index = 0; index < currBarBPMMarkerChipsArray.length; index++) {
+                        const element = currBarBPMMarkerChipsArray[index];
+                        if (element.barNum === 0 && element.lineNum === 0) {
+                            //Overwrite default if a bpm marker is found at bar 0 and line 0
+                            bpmMarkerArray[0].bpm = bpmLabelMap[element.chipCode] as number;
+                        } else {
+                            bpmMarkerArray.push({
+                                bpm: bpmLabelMap[element.chipCode] as number,
+                                barNum: element.barNum,
+                                lineNum: element.lineNum
+                            });
                         }
                     }
-                });
+                }
+            });
 
-                //TODO: Need to ensure bpmMarkerArray is in ascending order of bar-line number
-                //For now we assume it is already in ascending order from dtx content
-            }
-        } catch (error) {}
+            //TODO: Need to ensure bpmMarkerArray is in ascending order of bar-line number
+            //For now we assume it is already in ascending order from dtx content
+        }
 
         return bpmMarkerArray;
+    }
+
+    /**
+     *
+     * @param dtxContent
+     * @param barLengths
+     * @returns Array of ShowHideLineMarker, in ascending order of bar-line number
+     */
+
+    private extractShowHideLineMarkers(dtxContent: string, barLengths: number[]): ShowHideLineMarker[] {
+        let retArray: ShowHideLineMarker[] = [];
+        const showHideLaneCode : string = "C2";
+
+        for (let index = 0; index < barLengths.length; index++) {
+            const currBarLength : number = barLengths[index];
+            const barNumIn3Char: string = index.toString().padStart(3, "0");
+            //console.log(barNumIn3Char)
+
+            let regExpChip: RegExp = new RegExp("#" + barNumIn3Char + showHideLaneCode + ":? \\S*", "g"); // /#\d{3}02:? \S*/g
+            //console.log(regExpChip)
+
+            let chip_matchResults = [];
+            let matchResult = null;
+            while ((matchResult = regExpChip.exec(dtxContent)) != null) {
+                chip_matchResults.push(matchResult);
+            }
+
+            chip_matchResults.forEach((element) => {
+                let matchedBarLaneItem: BarLaneItem | null = this.decodeLineData(element[0]);
+                if (matchedBarLaneItem) {
+                    const chipsItemArray: ChipItem[] = this.decodeBarItem(
+                        matchedBarLaneItem.value,
+                        currBarLength,
+                        matchedBarLaneItem.barNum
+                    );
+                    for (let j = 0; j < chipsItemArray.length; j++) {
+                        const element = chipsItemArray[j];
+
+                        if(element.chipCode === "01" || element.chipCode === "02")
+
+                        //01 to show, 02 to hide
+                        retArray.push({
+                            lineNum: element.lineNum,
+                            barNum: element.barNum,
+                            show: element.chipCode === "01"
+                        });
+                    }
+                }
+            });
+        }
+
+        return retArray;
     }
 
     /**
