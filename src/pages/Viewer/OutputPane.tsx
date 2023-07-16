@@ -8,7 +8,7 @@ import CanvasDrawing from "../../external/CanvasDrawing/CanvasDrawing";
 
 const useDTXCanvasHook = (inputChartState: CanvasChartState, prefix: string) => {
     const drawCanvasFunction = useCallback(
-        (canvas: fabric.StaticCanvas, sourceObjectIndex: number) => {
+        (canvas: fabric.StaticCanvas, sourceObjectIndex: number, imageElement? : HTMLImageElement) => {
             console.log("drawCanvas func called");
             console.log(sourceObjectIndex);
 
@@ -17,6 +17,10 @@ const useDTXCanvasHook = (inputChartState: CanvasChartState, prefix: string) => 
                 CanvasDrawing.clear(canvas);
                 CanvasDrawing.drawAllChipsOntoCanvas(canvas, inputChartState.canvasDTXObjects[sourceObjectIndex]);
                 canvas.renderAll();
+                if(imageElement){                    
+                    imageElement.src = canvas.toDataURL();
+                }
+
             }
         },
         [inputChartState]
