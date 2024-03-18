@@ -10,8 +10,10 @@ const convertNumberToFormattedText = (inputValue: number, numOfDigits?: number |
 };
 
 const convertSecondsToMMssFormat = (inputSeconds: number): string => {
-    const minutes = Math.floor(inputSeconds / 60);
-    const seconds = Math.round(inputSeconds % 60);
+    //Round to nearest second first since we only show up to seconds
+    const secondsRounded = Math.round(inputSeconds);
+    const minutes = Math.floor(secondsRounded / 60);
+    const seconds = secondsRounded % 60;
     return minutes + ":" + convertNumberToFormattedText(seconds, 2);
 };
 
