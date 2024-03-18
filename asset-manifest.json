@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.js": "/dtxviewertool/static/js/main.325beb1e.js",
+    "main.js": "/dtxviewertool/static/js/main.b9ef7dc7.js",
     "static/media/GuitarAdvancedBannerSmall.png": "/dtxviewertool/static/media/GuitarAdvancedBannerSmall.c6e79289daef000f1a93.png",
     "static/media/BassAdvancedBannerSmall.png": "/dtxviewertool/static/media/BassAdvancedBannerSmall.63ad87d015b6592ddd83.png",
     "static/media/GuitarExtremeBannerSmall.png": "/dtxviewertool/static/media/GuitarExtremeBannerSmall.c62938ed704722790b54.png",
@@ -14,9 +14,9 @@
     "static/media/BassBasicBannerSmall.png": "/dtxviewertool/static/media/BassBasicBannerSmall.4ad4cb72bd8a37a71b7b.png",
     "static/media/DrumBasicBannerSmall.png": "/dtxviewertool/static/media/DrumBasicBannerSmall.d7e22d2bbb0375f11bba.png",
     "index.html": "/dtxviewertool/index.html",
-    "main.325beb1e.js.map": "/dtxviewertool/static/js/main.325beb1e.js.map"
+    "main.b9ef7dc7.js.map": "/dtxviewertool/static/js/main.b9ef7dc7.js.map"
   },
   "entrypoints": [
-    "static/js/main.325beb1e.js"
+    "static/js/main.b9ef7dc7.js"
   ]
 }
